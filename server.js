@@ -96,6 +96,18 @@ app.post("/api/bugs", uploadBug.single("media"), async (req, res) => {
   await save(); res.json({ ok: true });
 });
 
+// UPLOAD AVATAR PUBLIC (users)
+const pubImgUp = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_, f, cb) => cb(null, /^image\/(png|jpeg|webp|gif|x-icon|vnd\.microsoft\.icon)$/.test(f.mimetype))
+});
+app.post("/api/upload-avatar", pubImgUp.single("img"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "Image invalide" });
+  try { res.json({ url: await uploadToB2(req.file, "avatars/") }); }
+  catch (err) { res.status(500).json({ error: "Erreur d'upload" }); }
+});
+
 app.get("/api/clips", (req, res) => { const me = clean(req.query.uid, 40); res.json(db.clips.filter(c => !me || c.uid !== me).map(({ id, pseudo, platform, yt, url, medal, smurf, created }) => ({ id, pseudo, platform, yt, url, medal, smurf, created }))); });
 
 app.post("/api/clips", upload.single("video"), async (req, res) => {

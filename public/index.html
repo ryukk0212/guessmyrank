@@ -58,9 +58,6 @@ video,iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background
 .badge{background:var(--p);color:#1d0610;padding:2px 8px;border-radius:8px;font-weight:800;font-size:12px;margin-left:8px}
 .avatar-img{width:32px;height:32px;border-radius:50%;background:#2e1827;object-fit:cover;}
 .profile-modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;padding:16px;z-index:10}
-.avatar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:15px 0}
-.avatar-opt{width:100%;border-radius:50%;cursor:pointer;border:2px solid transparent}
-.avatar-opt.on{border-color:var(--p); box-shadow:0 0 10px var(--p);}
 .comments-box{margin-top:20px;border-top:1px solid var(--line);padding-top:15px;}
 .cmt{background:#0e070d;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;font-size:13px;}
 
@@ -74,6 +71,23 @@ video,iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background
 .light:nth-child(2n){background:green;box-shadow:0 0 10px green;animation-delay:0.5s;}
 .light:nth-child(3n){background:gold;box-shadow:0 0 10px gold;animation-delay:1s;}
 @keyframes blink{from{opacity:0.4}to{opacity:1}}
+
+/* BADGE UTILISATEUR (top-left) */
+.user-badge{position:fixed;top:20px;left:20px;z-index:99;display:flex;align-items:center;gap:10px;background:#150b13ee;border:1px solid var(--line);padding:6px 14px 6px 6px;border-radius:30px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 4px 15px #0008;cursor:url('/cursor-pointer.png'),pointer;transition:0.2s;}
+.user-badge:hover{border-color:var(--p);transform:translateY(-2px);}
+.user-badge img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#2e1827;flex:none;}
+.user-badge .ph{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--p2));display:grid;place-items:center;font-weight:800;color:#1d0610;font-size:14px;flex:none;}
+.user-badge span{font-weight:800;font-size:14px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media(max-width:640px){.user-badge span{display:none;}.user-badge{padding:4px;}}
+
+/* ONBOARDING plein écran avec blur */
+.profile-modal.onboarding-overlay{background:#0008;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:200;}
+.profile-modal.onboarding-overlay .mb{animation:slideUp .35s cubic-bezier(.2,.8,.2,1);}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+
+/* Bouton upload style label */
+.lbl-file{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:#1c0f19;color:var(--tx);font-weight:700;font-size:13px;cursor:url('/cursor-pointer.png'),pointer;transition:.2s;}
+.lbl-file:hover{border-color:var(--p);background:#241320;}
 </style></head><body><div id="bgimg"></div><div id="dim"></div>
 
 <!-- BOUTON BUG & NEIGE -->
@@ -91,6 +105,7 @@ const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let uid=ls("om_uid",null);if(!uid){uid="u"+Math.random().toString(36).slice(2,12);sv("om_uid",uid)}
 let myPseudo=ls("om_pseudo","");
 let myAvatar=ls("om_avatar","");
+let tmpAvatar = "";
 
 // --- GENERATEUR DE NEIGE ---
 const snowContainer = document.getElementById('snow-container');
@@ -127,14 +142,6 @@ function playSound(type) {
 }
 document.addEventListener('click', (e) => { if(e.target.closest('button') || e.target.closest('.rk') || e.target.closest('.opt')) playSound('click'); });
 
-const AVATARS = [
-  "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/displayicon.png",
-  "https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/displayicon.png",
-  "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/displayicon.png",
-  "https://media.valorant-api.com/agents/f94c3ec1-6f2d-7831-23c8-7d4b3c60e0c7/displayicon.png",
-  "https://media.valorant-api.com/agents/5f8d3a7f-467b-97f3-062c-13acf203c006/displayicon.png"
-];
-
 let S={name:"onlymy",tagline:"GUESS MY RANK · VALORANT",accent:"#ff4d8d",bg:"#0b060b",bgImage:"",blur:18,dim:.6,favicon:"",
  submitBlocks:[{id:"clip",w:"half"},{id:"rank",w:"half"},{id:"identity",w:"half"},{id:"platform",w:"half"},{id:"send",w:"full"}],playBlocks:["filters","info","video","ranks"],links:[]};
 let clips=[],played=ls("om_played",{}),f={tab:"up",platform:"",rank:"",div:"",file:null,err:"",smurf:false},cur=0,filter="all",pick="";
@@ -162,11 +169,12 @@ function openBug(){
   document.body.appendChild(m);
 }
 async function sendBug(btn){
-  const pseudo = $("#bug-pseudo").value;
-  const desc = $("#bug-desc").value;
-  const file = $("#bug-media").files[0];
+  const modal = btn.closest('.profile-modal');
+  const pseudo = modal.querySelector("#bug-pseudo").value;
+  const desc = modal.querySelector("#bug-desc").value;
+  const file = modal.querySelector("#bug-media").files[0];
   if(!desc) return alert("Décris le bug s'il te plaît !");
-  
+
   const fd = new FormData();
   fd.append("pseudo", pseudo);
   fd.append("desc", desc);
@@ -176,12 +184,127 @@ async function sendBug(btn){
   try {
     const r = await fetch("/api/bugs", {method:"POST", body:fd});
     if(r.ok) {
-      btn.closest('.profile-modal').innerHTML = `<div class="mb" style="text-align:center;"><h2>Merci !</h2><p>Ton rapport a bien été transmis. Je vais regarder ça.</p></div>`;
-      setTimeout(()=> btn.closest('.profile-modal').remove(), 3000);
+      modal.innerHTML = `<div class="mb" style="text-align:center;">
+        <div style="font-size:52px;margin-bottom:8px;">✅</div>
+        <h2 style="color:#2fcf86;margin:0 0 10px;">Merci !</h2>
+        <p style="color:var(--mut);margin:0 0 22px;">Ton rapport a bien été transmis.<br>Je vais regarder ça rapidement.</p>
+        <button class="go" onclick="this.closest('.profile-modal').remove()">Fermer</button>
+      </div>`;
     } else { throw new Error("Erreur"); }
   } catch(e) {
-    alert("Erreur d'envoi du bug."); btn.textContent = "Envoyer le rapport"; btn.disabled = false;
+    alert("Erreur d'envoi du bug.");
+    btn.textContent = "Envoyer le rapport"; btn.disabled = false;
   }
+}
+
+// --- BADGE UTILISATEUR ---
+function renderUserBadge(){
+  let el = document.getElementById("user-badge-el");
+  if(!el){ el = document.createElement("div"); el.id="user-badge-el"; document.body.appendChild(el); }
+  const initial = (myPseudo || "?")[0].toUpperCase();
+  el.innerHTML = `<div class="user-badge" onclick="openProfile()">${
+    myAvatar ? `<img src="${esc(myAvatar)}" alt="">` : `<div class="ph">${initial}</div>`
+  }<span>${esc(myPseudo || "Invité")}</span></div>`;
+}
+
+function openProfile(){
+  const m = document.createElement("div"); m.className = "profile-modal";
+  const initial = (myPseudo || "?")[0].toUpperCase();
+  m.innerHTML = `<div class="mb">
+    <div style="text-align:right;cursor:pointer" onclick="this.closest('.profile-modal').remove()">✕</div>
+    <h3 style="margin-top:0">Ton Profil</h3>
+    <label class="f">Pseudo</label>
+    <input type="text" id="p-pseudo" value="${esc(myPseudo)}" placeholder="Ton pseudo">
+    <label class="f" style="margin-top:15px">Photo de profil</label>
+    <div style="display:flex;align-items:center;gap:15px;margin:10px 0 20px;">
+      <img id="p-avatar-preview" src="${myAvatar||''}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;background:#2e1827;border:1px solid var(--line);${myAvatar?'':'display:none;'}">
+      <div id="p-avatar-ph" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--p2));display:${myAvatar?'none':'grid'};place-items:center;font-weight:800;color:#1d0610;font-size:28px;">${initial}</div>
+      <label class="lbl-file">📷 Choisir<input type="file" id="p-avatar-file" accept="image/*" hidden></label>
+    </div>
+    <button class="go" onclick="saveProfile(this)">Enregistrer</button>
+  </div>`;
+  document.body.appendChild(m);
+
+  tmpAvatar = myAvatar || "";
+  const fi = m.querySelector("#p-avatar-file");
+  const pv = m.querySelector("#p-avatar-preview");
+  const ph = m.querySelector("#p-avatar-ph");
+  fi.onchange = async () => {
+    const file = fi.files[0]; if(!file) return;
+    pv.src = URL.createObjectURL(file);
+    pv.style.display = "block"; ph.style.display = "none";
+    const fd = new FormData(); fd.append("img", file);
+    fi.parentNode.style.opacity = "0.5";
+    try {
+      const r = await fetch("/api/upload-avatar", {method:"POST", body:fd});
+      if(r.ok){ tmpAvatar = (await r.json()).url; pv.src = tmpAvatar; }
+      else alert("Erreur upload image");
+    } catch(e){ alert("Erreur upload image"); }
+    finally { fi.parentNode.style.opacity = "1"; }
+  };
+}
+
+function saveProfile(btn){
+  const modal = btn.closest('.profile-modal');
+  myPseudo = modal.querySelector("#p-pseudo").value.trim() || "Anonyme";
+  myAvatar = tmpAvatar || "";
+  sv("om_pseudo", myPseudo); sv("om_avatar", myAvatar); sv("om_onboarded", true);
+  modal.remove();
+  renderUserBadge();
+  render();
+}
+
+function showOnboarding(){
+  if(document.getElementById("onboarding")) return;
+  const m = document.createElement("div");
+  m.className = "profile-modal onboarding-overlay";
+  m.id = "onboarding";
+  m.innerHTML = `<div class="mb" style="width:min(430px,100%);">
+    <h2 style="margin:0 0 6px;color:var(--p);font-family:Syne,sans-serif;">Bienvenue 👋</h2>
+    <p style="color:var(--mut);margin:0 0 20px;font-size:13px;">Choisis ton pseudo et ta photo de profil pour participer.</p>
+    <label class="f">Pseudo</label>
+    <input type="text" id="ob-pseudo" value="${esc(myPseudo)}" placeholder="Ton pseudo">
+    <label class="f" style="margin-top:15px">Photo de profil</label>
+    <div style="display:flex;align-items:center;gap:15px;margin:10px 0 20px;">
+      <img id="ob-avatar-preview" src="${myAvatar||''}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;background:#2e1827;border:1px solid var(--line);${myAvatar?'':'display:none;'}">
+      <div id="ob-avatar-ph" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--p2));display:${myAvatar?'none':'grid'};place-items:center;font-weight:800;color:#1d0610;font-size:28px;">?</div>
+      <label class="lbl-file">📷 Choisir<input type="file" id="ob-avatar-file" accept="image/*" hidden></label>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="go" id="ob-save" style="flex:1;">Enregistrer</button>
+      <button class="btn" onclick="skipOnboarding()">Passer</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+
+  tmpAvatar = myAvatar || "";
+  const fi = m.querySelector("#ob-avatar-file");
+  const pv = m.querySelector("#ob-avatar-preview");
+  const ph = m.querySelector("#ob-avatar-ph");
+  fi.onchange = async () => {
+    const file = fi.files[0]; if(!file) return;
+    pv.src = URL.createObjectURL(file);
+    pv.style.display = "block"; ph.style.display = "none";
+    const fd = new FormData(); fd.append("img", file);
+    try {
+      const r = await fetch("/api/upload-avatar", {method:"POST", body:fd});
+      if(r.ok){ tmpAvatar = (await r.json()).url; pv.src = tmpAvatar; }
+      else alert("Erreur upload image");
+    } catch(e){ alert("Erreur upload image"); }
+  };
+  m.querySelector("#ob-save").onclick = () => {
+    const pseudo = m.querySelector("#ob-pseudo").value.trim();
+    if(!pseudo) return alert("Choisis un pseudo !");
+    myPseudo = pseudo; myAvatar = tmpAvatar || "";
+    sv("om_pseudo", myPseudo); sv("om_avatar", myAvatar); sv("om_onboarded", true);
+    m.remove();
+    renderUserBadge(); render();
+  };
+}
+
+function skipOnboarding(){
+  const m = document.getElementById("onboarding"); if(m) m.remove();
+  sv("om_onboarded", true);
 }
 
 function apply(){
@@ -227,33 +350,7 @@ function render(){
   $("#app").innerHTML=nav()+(view()==="play"?playView():view()==="top"?topView():submitView())+foot();
   if(view()==="submit")bindSubmit();
   if(view()==="top")loadTopData();
-}
-
-function openProfile(){
-  const m = document.createElement("div"); m.className = "profile-modal";
-  m.innerHTML = `<div class="mb">
-    <div style="text-align:right;cursor:pointer" onclick="this.closest('.profile-modal').remove()">✕</div>
-    <h3 style="margin-top:0">Ton Profil</h3>
-    <label class="f">Pseudo</label>
-    <input type="text" id="p-pseudo" value="${esc(myPseudo)}" placeholder="Ton pseudo">
-    <label class="f" style="margin-top:15px">Avatar</label>
-    <div class="avatar-grid">
-      ${AVATARS.map(a => `<img src="${a}" class="avatar-opt ${myAvatar===a?'on':''}" onclick="selectAvatar('${a}', this)">`).join("")}
-    </div>
-    <button class="go" onclick="saveProfile(this)">Enregistrer</button>
-  </div>`;
-  document.body.appendChild(m);
-}
-function selectAvatar(url, el){
-  myAvatar = url; sv("om_avatar", url);
-  document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('on'));
-  el.classList.add('on');
-}
-function saveProfile(btn){
-  myPseudo = $("#p-pseudo").value.trim() || "Anonyme";
-  sv("om_pseudo", myPseudo);
-  btn.closest('.profile-modal').remove();
-  render();
+  renderUserBadge();
 }
 
 const hd=(n,t,s)=>`<div class="step">${n?`<b>${n}</b>`:""}<div><h3>${t}</h3>${s?`<small>${s}</small>`:""}</div></div>`;
@@ -299,6 +396,7 @@ async function send(){
   if(!r.ok)throw new Error((await r.json()).error||r.status);
   f={tab:"up",platform:"",rank:"",div:"",file:null,err:"",smurf:false};
   $("#app").innerHTML=nav()+`<div class="card empty"><h1 class="title-game">Clip envoyé ✓</h1><p>Merci ! La communauté peut maintenant deviner ton rank.</p><button class="btn pink" onclick="location.hash='play'">Jouer →</button></div>`+foot();
+  renderUserBadge();
   fetch("/api/clips?uid="+encodeURIComponent(uid)).then(r=>r.json()).then(d=>clips=d);
  }catch(x){e("Erreur : "+(x.message||"réessaie"));$("#send").disabled=false;$("#send").textContent="Envoyer mon clip ›"}
 }
@@ -394,6 +492,7 @@ function modalDefi(d,ok){
 function endDefi(){
  $("#app").innerHTML=nav()+`<div class="card empty"><h1 class="title-game">Défi terminé !</h1><p style="font-size:24px;margin:20px 0;">Score : <b style="color:var(--p)">${defiScore} / ${defiClips.length}</b></p>
  <div style="display:flex;gap:10px;justify-content:center;"><button class="btn pink" onclick="startDefi()">Recommencer</button> <button class="btn" onclick="stopDefi()">Quitter</button></div></div>`+foot();
+ renderUserBadge();
  defiMode=false;
 }
 function modal(d,ok,clipId){
@@ -452,5 +551,9 @@ addEventListener("hashchange",()=>{pick="";render()});
  try{S={...S,...await (await fetch("/api/settings")).json()}}catch(e){}
  try{clips=await (await fetch("/api/clips?uid="+encodeURIComponent(uid))).json()}catch(e){}
  apply();render();
+ if(!ls("om_onboarded", false)){
+   if(myPseudo) sv("om_onboarded", true);
+   else setTimeout(showOnboarding, 250);
+ }
 })();
 </script></body></html>
