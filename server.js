@@ -1,5 +1,12 @@
 const express = require("express"), multer = require("multer"), fs = require("fs"), path = require("path"), crypto = require("crypto");
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+
+// --- 1. INITIALISATION EXPRESS (TOUT EN HAUT) ---
+const app = express();
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+
+// --- 2. VARIABLES ET CONFIGURATION ---
 const PORT = process.env.PORT || 3000;
 const OWNERS = ["1511466511611461845", "1247495035361038410", "1305652757578907720"];
 const D_ID = process.env.DISCORD_CLIENT_ID || "", D_SECRET = process.env.DISCORD_CLIENT_SECRET || "";
@@ -38,17 +45,13 @@ async function uploadToB2(file, prefix = "") {
   return `https://${process.env.B2_BUCKET_NAME}.${process.env.B2_ENDPOINT}/${fileKey}`;
 }
 
-// Stockage en mémoire (plus de dossier local !)
+// Stockage en mémoire
 const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter: (_, file, cb) => cb(null, /^video\//.test(file.mimetype))
 });
 
-const app = express();
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
-
-// Liste publique
+// --- 3. ROUTES PUBLIQUES ---
 app.get("/api/clips", (req, res) => { const me = clean(req.query.uid, 40); res.json(db.clips.filter(c => !me || c.uid !== me).map(({ id, pseudo, platform, yt, url, created }) => ({ id, pseudo, platform, yt, url, created }))); });
 
 // Upload d'un clip vers B2
@@ -87,7 +90,6 @@ app.post("/api/clips/:id/vote", (req, res) => {
   res.json({ mine: v.rank, rank: c.rank, div: c.div, tally });
 });
 
-// Classement
 app.get("/api/leaderboard", (req, res) => {
   const stats = {};
   db.votes.forEach(v => {
@@ -102,7 +104,6 @@ app.get("/api/leaderboard", (req, res) => {
   res.json(list);
 });
 
-// Signalement
 app.post("/api/clips/:id/report", (req, res) => {
   const c = db.clips.find(x => x.id === req.params.id);
   if (!c) return res.status(404).json({ error: "Clip introuvable" });
@@ -110,7 +111,7 @@ app.post("/api/clips/:id/report", (req, res) => {
   save(); res.json({ ok: true });
 });
 
-// ---------- RÉGLAGES + ADMIN ----------
+// --- 4. RÉGLAGES + ADMIN ---
 const SET = path.join(__dirname, "data", "settings.json");
 const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff4d8d", bg: "#0b060b", bgImage: "", blur: 18, dim: 0.6, favicon: "",
   submitBlocks: ["clip","rank","identity","platform","send"].map(id => ({ id, w: id === "send" ? "full" : "half" })),
@@ -124,7 +125,7 @@ const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff
     { id: "contact", label: "Contact pro", sub: "contact.onlymy@gmail.com", url: "mailto:contact.onlymy@gmail.com", color: "#ea4335", icon: "✉️", iconImg: "", pos: "bottom", big: false }] };
 let settings = fs.existsSync(SET) ? { ...DEF, ...JSON.parse(fs.readFileSync(SET, "utf8")) } : DEF;
 const col = (v, d) => /^#[0-9a-f]{6}$/i.test(v) ? v : d;
-const img = v => /^https?:\/\/\S+$/.test(v) ? v : ""; // Modifié pour accepter les URLs B2
+const img = v => /^https?:\/\/\S+$/.test(v) ? v : ""; 
 const lnk = v => /^(https?:\/\/|mailto:)\S+$/i.test(String(v)) ? String(v).slice(0, 500) : "";
 const uniq = (arr, ids, f) => { const o = []; (Array.isArray(arr) ? arr : []).forEach(x => { const i = f(x); if (ids.includes(i) && !o.find(y => f(y) === i)) o.push(x); }); ids.forEach(i => { if (!o.find(y => f(y) === i)) o.push(i); }); return o; };
 
@@ -139,7 +140,7 @@ function sanitize(b = {}) {
       w: Math.min(460, Math.max(0, Math.round(+l.w || 0))) >= 80 ? Math.min(460, Math.round(+l.w)) : 0, h: Math.min(200, Math.max(0, Math.round(+l.h || 0))) >= 40 ? Math.min(200, Math.round(+l.h)) : 0 })) };
 }
 
-// ---------- CONNEXION DISCORD ----------
+// --- 5. CONNEXION DISCORD ---
 const sign = v => crypto.createHmac("sha256", SESSION_SECRET).update(v).digest("base64url");
 const mk = o => { const p = Buffer.from(JSON.stringify(o)).toString("base64url"); return p + "." + sign(p); };
 const rd = t => { try { const [p, g] = String(t).split("."); const a = Buffer.from(sign(p)), b = Buffer.from(g || "");
@@ -194,7 +195,6 @@ app.post("/api/admin/upload", auth, imgUp.single("img"), async (req, res) => {
 app.get("/api/admin/contacts", auth, (_, res) => res.json(db.clips.map(({ id, pseudo, discord, rank, div, yt, url }) => ({ id, pseudo, discord, rank, div, yt, url }))));
 app.get("/api/admin/reports", auth, (_, res) => res.json(db.reports));
 
-// Suppression clip (B2 + DB)
 app.delete("/api/admin/clips/:id", auth, async (req, res) => {
   const c = db.clips.find(x => x.id === req.params.id);
   if (c && c.url && c.url.includes("backblazeb2.com")) {
