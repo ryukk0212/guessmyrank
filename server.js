@@ -132,7 +132,7 @@ const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff
     { id: "contact", label: "Contact pro", sub: "contact.onlymy@gmail.com", url: "mailto:contact.onlymy@gmail.com", color: "#ea4335", icon: "✉️", iconImg: "", pos: "bottom", big: false }] };
 let settings = fs.existsSync(SET) ? { ...DEF, ...JSON.parse(fs.readFileSync(SET, "utf8")) } : DEF;
 const col = (v, d) => /^#[0-9a-f]{6}$/i.test(v) ? v : d;
-const img = v => /^https?:\/\/\S+$/.test(v) ? v : ""; 
+const img = v => /^(https?:\/\/\S+|\/logos\/[\w.-]+\.png)$/i.test(v) ? v : "";
 const lnk = v => /^(https?:\/\/|mailto:)\S+$/i.test(String(v)) ? String(v).slice(0, 500) : "";
 const uniq = (arr, ids, f) => { const o = []; (Array.isArray(arr) ? arr : []).forEach(x => { const i = f(x); if (ids.includes(i) && !o.find(y => f(y) === i)) o.push(x); }); ids.forEach(i => { if (!o.find(y => f(y) === i)) o.push(i); }); return o; };
 

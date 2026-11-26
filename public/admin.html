@@ -100,8 +100,21 @@ function draw(){
  ${T(`links.${i}.label`,"Nom du bouton",l.label)}${T(`links.${i}.sub`,"Description",l.sub)}${T(`links.${i}.url`,"Lien (https://… ou mailto:…)",l.url)}
  <label>Couleur du bouton<input type="color" data-k="links.${i}.color" value="${l.color}"></label>
  <label>Emplacement<select data-k="links.${i}.pos"><option value="bottom" ${l.pos!=="top"?"selected":""}>En bas du site</option><option value="top" ${l.pos==="top"?"selected":""}>En haut (nav)</option></select></label>
- ${T(`links.${i}.icon`,"Icône (emoji)",l.icon,'maxlength="4"')}
- <label>Ou importer une icône<input type="file" accept="image/*" data-up="links.${i}.iconImg">${l.iconImg?`<img src="${esc(l.iconImg)}" width="36"><button onclick="cfg.links[${i}].iconImg='';draw()">Retirer</button>`:""}</label>
+  <label>Logo prédéfini
+   <select onchange="cfg.links[${i}].iconImg=this.value; cfg.links[${i}].icon=''; draw()">
+     <option value="">-- Aucun --</option>
+     <option value="/logos/discord.png" ${l.iconImg==="/logos/discord.png"?"selected":""}>Discord</option>
+     <option value="/logos/paypal.png" ${l.iconImg==="/logos/paypal.png"?"selected":""}>PayPal</option>
+     <option value="/logos/tiktok.png" ${l.iconImg==="/logos/tiktok.png"?"selected":""}>TikTok</option>
+     <option value="/logos/gmail.png" ${l.iconImg==="/logos/gmail.png"?"selected":""}>Gmail (Contact)</option>
+     <option value="/logos/tunelio.png" ${l.iconImg==="/logos/tunelio.png"?"selected":""}>Tunelio</option>
+     <option value="/logos/uwuanime.png" ${l.iconImg==="/logos/uwuanime.png"?"selected":""}>UwUanime</option>
+     <option value="/logos/medal.png" ${l.iconImg==="/logos/medal.png"?"selected":""}>Medal</option>
+     <option value="/logos/youtube.png" ${l.iconImg==="/logos/youtube.png"?"selected":""}>YouTube</option>
+   </select>
+ </label>
+ ${T(`links.${i}.icon`,"Ou Icône (emoji)",l.icon,'maxlength="4"')}
+ <label>Ou importer une image de ton PC<input type="file" accept="image/*" data-up="links.${i}.iconImg">${l.iconImg&&l.iconImg.includes('https')?`<img src="${esc(l.iconImg)}" width="36"><button onclick="cfg.links[${i}].iconImg='';draw()">Retirer</button>`:""}</label>
  <label class="ck"><input type="checkbox" data-k="links.${i}.big" ${l.big?"checked":""}> Grand bouton mis en avant</label></div></div>`).join("")+`<button class="pk" onclick="addLink()">+ Ajouter un bouton</button>`;
  if(tab==="layout")b=`<div class="box"><b>Page d’envoi</b><p><small>Ordre et largeur.</small></p>`+cfg.submitBlocks.map((x,i)=>`<div class="row"><span>${SL[x.id]}</span><span><select data-k="submitBlocks.${i}.w"><option value="half" ${x.w!=="full"?"selected":""}>Demi</option><option value="full" ${x.w==="full"?"selected":""}>Pleine</option></select> <button onclick="mv('submitBlocks',${i},-1)">↑</button> <button onclick="mv('submitBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>
  <div class="box"><b>Page de jeu</b><p><small>Ordre des éléments.</small></p>`+cfg.playBlocks.map((x,i)=>`<div class="row"><span>${PL[x]}</span><span><button onclick="mv('playBlocks',${i},-1)">↑</button> <button onclick="mv('playBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>`;
