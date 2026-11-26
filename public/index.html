@@ -2,24 +2,12 @@
 <html lang="fr"><head><meta charset="utf-8"><title>Guess My Rank</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" id="fav" href="data:,">
-<!-- PRÉCHARGEMENT DES LOGOS POUR ÉVITER LES CLIGNOTEMENTS -->
-<link rel="preload" as="image" href="ranks/fer.png">
-<link rel="preload" as="image" href="ranks/bronze.png">
-<link rel="preload" as="image" href="ranks/argent.png">
-<link rel="preload" as="image" href="ranks/or.png">
-<link rel="preload" as="image" href="ranks/platine.png">
-<link rel="preload" as="image" href="ranks/diamant.png">
-<link rel="preload" as="image" href="ranks/ascendant.png">
-<link rel="preload" as="image" href="ranks/immortel.png">
-<link rel="preload" as="image" href="ranks/radiant.png">
-
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@800&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0b060b;--card:#150b13;--line:#2e1827;--tx:#fbeff5;--mut:#b99aab;--p:#ff4d8d;--p2:color-mix(in srgb,var(--p) 55%,white);box-sizing:border-box}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:radial-gradient(ellipse at 15% 0,color-mix(in srgb,var(--p) 20%,transparent) 0,transparent 45%),radial-gradient(ellipse at 90% 60%,color-mix(in srgb,var(--p) 14%,transparent) 0,transparent 45%),var(--bg);color:var(--tx);font:400 14px Manrope,system-ui,sans-serif;min-height:100vh;cursor:url('/cursor-normal.png'),auto;}
 a,button,.opt,.rk,.tabs span,input[type=checkbox]{cursor:url('/cursor-pointer.png'),pointer;}
-/* ANTI-SURBRILLANCE ET SÉLECTION */
 button,.rk,.opt{-webkit-tap-highlight-color:transparent; user-select:none;}
 #bgimg,#dim{position:fixed;inset:-60px;background-size:cover;background-position:center;z-index:0;pointer-events:none}#dim{inset:0;background:var(--bg);opacity:0}
 .wrap{position:relative;z-index:1;max-width:1100px;margin:auto;padding:max(28px,env(safe-area-inset-top)) 18px 60px}
@@ -41,11 +29,8 @@ input[type=text]{width:100%;background:#0e070d;border:1px solid var(--line);colo
 label.f{display:block;font-weight:600;font-size:12px;margin:12px 0 6px}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .opt{border:1px solid var(--line);background:#0e070d;border-radius:14px;padding:18px;display:flex;gap:10px;align-items:center}.opt i{width:18px;height:18px;border-radius:50%;border:2px solid #6b4a5d}.opt.on{border-color:var(--p);background:color-mix(in srgb,var(--p) 14%,#0e070d)}.opt.on i{background:var(--p);border-color:var(--p)}
 .ranks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.ranks.nine{grid-template-columns:repeat(9,1fr)}@media(max-width:700px){.ranks.nine{grid-template-columns:repeat(3,1fr)}}
-/* ANIMATION FLUIDE POUR LES RANGS */
 .rk{background:#0e070d;border:1px solid var(--line);border-radius:14px;padding:14px 6px;text-align:center;font-weight:700;font-size:12px;transition:background 0.2s, border-color 0.2s, transform 0.1s;}
-.rk:hover{border-color:#5b2c48}
-.rk:active{transform:scale(0.96)}
-.rk.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 22%,#150b13);box-shadow:0 0 0 1px var(--c) inset}
+.rk:hover{border-color:#5b2c48}.rk:active{transform:scale(0.96)}.rk.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 22%,#150b13);box-shadow:0 0 0 1px var(--c) inset}
 .gem img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;}.gem.img{background:none;clip-path:none}
 .gem{width:38px;height:42px;margin:0 auto 8px;background:linear-gradient(145deg,#fff8,var(--c) 45%,#0006);clip-path:polygon(50% 0,100% 28%,100% 72%,50% 100%,0 72%,0 28%)}
 .divs{display:flex;gap:8px;margin-top:10px}.divs .opt{padding:10px 16px}
@@ -55,6 +40,7 @@ label.f{display:block;font-weight:600;font-size:12px;margin:12px 0 6px}.two{disp
 video,iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background:#000;display:block}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .pill{border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;margin-left:8px;color:var(--mut)}
+.pill.smurf{background:#ff4d8d;color:#1d0610;font-weight:800;border:0;}
 .modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;padding:16px;z-index:9}
 .mb{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;width:min(480px,100%);max-height:92vh;overflow:auto}
 .res{text-align:center;font:800 28px Syne;margin:0 0 16px}.res.ok{color:#2fcf86}.res.ko{color:var(--p)}
@@ -68,8 +54,15 @@ video,iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background
 .lk.big{background:linear-gradient(135deg,var(--lc),color-mix(in srgb,var(--lc) 55%,white));color:#1d0610;border:0;box-shadow:0 8px 30px color-mix(in srgb,var(--lc) 35%,transparent)}.lk.big i{background:#fff4}.lk.big small{color:#1d0610cc}
 .lk.sm{width:auto;padding:8px 16px 8px 8px;border-radius:14px}.lk.sm i{width:30px;height:30px;font-size:15px;border-radius:9px}
 .foot{max-width:940px;margin:50px auto 0;display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:12px}.foot .copy{width:100%}.copy{text-align:center;font-size:10px;letter-spacing:.25em;color:var(--p);margin-top:18px}
-.lb-row{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line);align-items:center}.lb-row:last-child{border:0}
+.lb-row{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line);align-items:center;gap:10px}.lb-row:last-child{border:0}
 .badge{background:var(--p);color:#1d0610;padding:2px 8px;border-radius:8px;font-weight:800;font-size:12px;margin-left:8px}
+.avatar-img{width:32px;height:32px;border-radius:50%;background:#2e1827;object-fit:cover;}
+.profile-modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;padding:16px;z-index:10}
+.avatar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:15px 0}
+.avatar-opt{width:100%;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.avatar-opt.on{border-color:var(--p); box-shadow:0 0 10px var(--p);}
+.comments-box{margin-top:20px;border-top:1px solid var(--line);padding-top:15px;}
+.cmt{background:#0e070d;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;font-size:13px;}
 </style></head><body><div id="bgimg"></div><div id="dim"></div><div class="wrap" id="app"></div>
 <script>
 const R=[["Fer","#8a8f98"],["Bronze","#a9743b"],["Argent","#c5ccd6"],["Or","#f0b43c"],["Platine","#3fb5c9"],["Diamant","#b67cf2"],["Ascendant","#2fcf86"],["Immortel","#e0476b"],["Radiant","#f6e3a1"]];
@@ -80,9 +73,41 @@ const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){retu
 const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let uid=ls("om_uid",null);if(!uid){uid="u"+Math.random().toString(36).slice(2,12);sv("om_uid",uid)}
 let myPseudo=ls("om_pseudo","");
+let myAvatar=ls("om_avatar","");
+
+// GESTION DES SONS (Web Audio API)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  if (type === 'click') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+  } else if (type === 'success') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(400, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+  } else if (type === 'fail') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+  }
+}
+document.addEventListener('click', (e) => { if(e.target.closest('button') || e.target.closest('.rk') || e.target.closest('.opt')) playSound('click'); });
+
+const AVATARS = [
+  "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/displayicon.png",
+  "https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/displayicon.png",
+  "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/displayicon.png",
+  "https://media.valorant-api.com/agents/f94c3ec1-6f2d-7831-23c8-7d4b3c60e0c7/displayicon.png",
+  "https://media.valorant-api.com/agents/5f8d3a7f-467b-97f3-062c-13acf203c006/displayicon.png"
+];
+
 let S={name:"onlymy",tagline:"GUESS MY RANK · VALORANT",accent:"#ff4d8d",bg:"#0b060b",bgImage:"",blur:18,dim:.6,favicon:"",
  submitBlocks:[{id:"clip",w:"half"},{id:"rank",w:"half"},{id:"identity",w:"half"},{id:"platform",w:"half"},{id:"send",w:"full"}],playBlocks:["filters","info","video","ranks"],links:[]};
-let clips=[],played=ls("om_played",{}),f={tab:"up",platform:"",rank:"",div:"",file:null,err:""},cur=0,filter="all",pick="";
+let clips=[],played=ls("om_played",{}),f={tab:"up",platform:"",rank:"",div:"",file:null,err:"",smurf:false},cur=0,filter="all",pick="";
 let streak=ls("om_streak",0), defiMode=false, defiCur=0, defiScore=0, defiClips=[];
 const ytId=u=>{const m=String(u).match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/);return m?m[1]:null};
 const medalId=u=>{const m=String(u).match(/medal\.tv\/(?:games\/[^/]+\/)?clips?\/([a-zA-Z0-9]+)/);return m?m[1]:null};
@@ -118,9 +143,11 @@ function lk(l,sm){
 }
 function nav(){
  return `<div class="logo">${esc(S.name)}</div><div class="sub">${esc(S.tagline)}</div>
- <div class="nav"><button class="btn ${view()==="submit"?"pink":""}" onclick="location.hash='submit'">Envoyer mon clip</button>
+ <div class="nav">
+ <button class="btn ${view()==="submit"?"pink":""}" onclick="location.hash='submit'">Envoyer mon clip</button>
  <button class="btn ${view()==="play"?"pink":""}" onclick="location.hash='play'">Jouer</button>
  <button class="btn ${view()==="top"?"pink":""}" onclick="location.hash='top'">🏆 Classement</button>
+ <button class="btn" onclick="openProfile()">⚙️ Profil</button>
  ${S.links.filter(l=>l.pos==="top").map(l=>lk(l,1)).join("")}</div>`;
 }
 function foot(){return `<div class="foot">${S.links.filter(l=>l.pos==="bottom").map(l=>lk(l)).join("")}<div class="copy">— © ${new Date().getFullYear()} ${esc(S.name)} —</div></div>`}
@@ -129,6 +156,34 @@ function render(){
   $("#app").innerHTML=nav()+(view()==="play"?playView():view()==="top"?topView():submitView())+foot();
   if(view()==="submit")bindSubmit();
   if(view()==="top")loadTopData();
+}
+
+// GESTION DU PROFIL (Pseudo + Avatar)
+function openProfile(){
+  const m = document.createElement("div"); m.className = "profile-modal";
+  m.innerHTML = `<div class="mb">
+    <div style="text-align:right;cursor:pointer" onclick="this.closest('.profile-modal').remove()">✕</div>
+    <h3 style="margin-top:0">Ton Profil</h3>
+    <label class="f">Pseudo</label>
+    <input type="text" id="p-pseudo" value="${esc(myPseudo)}" placeholder="Ton pseudo">
+    <label class="f" style="margin-top:15px">Avatar</label>
+    <div class="avatar-grid">
+      ${AVATARS.map(a => `<img src="${a}" class="avatar-opt ${myAvatar===a?'on':''}" onclick="selectAvatar('${a}', this)">`).join("")}
+    </div>
+    <button class="go" onclick="saveProfile(this)">Enregistrer</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+function selectAvatar(url, el){
+  myAvatar = url; sv("om_avatar", url);
+  document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('on'));
+  el.classList.add('on');
+}
+function saveProfile(btn){
+  myPseudo = $("#p-pseudo").value.trim() || "Anonyme";
+  sv("om_pseudo", myPseudo);
+  btn.closest('.profile-modal').remove();
+  render();
 }
 
 /* ---------- ENVOI ---------- */
@@ -140,7 +195,8 @@ const BL={
  ${f.tab==="medal"?`<input type="text" id="medal" placeholder="https://medal.tv/games/..." value="${esc(f.medal||"")}" onchange="keep()">${medalId(f.medal||"")?`<div class="vprev"><iframe src="https://medal.tv/clip/${medalId(f.medal)}/embed" allowfullscreen></iframe></div>`:""}`:""}
  <p class="note">🛡 Ne montre pas ton RANK : ni dans le titre, ni dans ton pseudo, ni à l’écran.</p>`,
  identity:n=>hd(n,"Qui se cache derrière le clip ?","Pour afficher ton nom et te joindre si ton clip est choisi.")+`<div class="two"><div><label class="f">Pseudo à afficher</label><input type="text" id="pseudo" placeholder="Ton pseudo" value="${esc(f.pseudo||"")}"></div><div><label class="f">Pseudo Discord</label><input type="text" id="discord" placeholder="ex. monpseudo" value="${esc(f.discord||"")}"></div></div>`,
- platform:n=>hd(n,"Sur quelle plateforme joues-tu ?","Indique sur quel support tu as enregistré ce clip.")+`<div class="two"><div class="opt ${f.platform==="PC"?"on":""}" onclick="f.platform='PC';keep()"><i></i>PC</div><div class="opt ${f.platform==="Console"?"on":""}" onclick="f.platform='Console';keep()"><i></i>Console</div></div>`,
+ platform:n=>hd(n,"Sur quelle plateforme joues-tu ?","Indique sur quel support tu as enregistré ce clip.")+`<div class="two"><div class="opt ${f.platform==="PC"?"on":""}" onclick="f.platform='PC';keep()"><i></i>PC</div><div class="opt ${f.platform==="Console"?"on":""}" onclick="f.platform='Console';keep()"><i></i>Console</div></div>
+ <label class="ck" style="margin-top:15px;color:#ff6b8b;"><input type="checkbox" id="smurf" ${f.smurf?"checked":""} onchange="f.smurf=this.checked;keep()"> 🚨 Mode Smurf (Ce joueur est beaucoup plus fort que son vrai rang)</label>`,
  rank:n=>hd(n,"Ton RANK. À eux de deviner.","Ton rank au moment où le clip a été enregistré.")+`<div class="ranks">${R.map(([r,c])=>`<div class="rk ${f.rank===r?"on":""}" style="--c:${c}" onclick="f.rank='${r}';f.div='';keep()">${gem(r)}${r}</div>`).join("")}</div>
  ${f.rank&&f.rank!=="Radiant"?`<div class="divs">${[1,2,3].map(d=>`<div class="opt ${f.div==d?"on":""}" onclick="f.div=${d};keep()"><i></i>${d}</div>`).join("")}</div>`:""}
  ${f.rank?`<p class="note">✔ ${esc(f.rank)}${f.div?" "+f.div:""}</p>`:""}`,
@@ -153,10 +209,10 @@ function submitView(){
  W.forEach((b,i)=>{if(b.w==="full"){flush();out+=items[i]}else run.push(items[i])});flush();
  return `<div style="text-align:center;"><h1 class="title-game">Envoie ton clip à ${esc(S.name)}</h1><p class="lead">Ajoute ta vidéo, ton pseudo et ton rank. À nous de deviner.</p></div><div class="grid">${out}</div>`;
 }
-function keep(){f.pseudo=$("#pseudo")?.value??f.pseudo;f.discord=$("#discord")?.value??f.discord;f.yt=$("#yt")?.value??f.yt;f.medal=$("#medal")?.value??f.medal;f.ok=$("#ok")?.checked??f.ok;render()}
+function keep(){f.pseudo=$("#pseudo")?.value??f.pseudo;f.discord=$("#discord")?.value??f.discord;f.yt=$("#yt")?.value??f.yt;f.medal=$("#medal")?.value??f.medal;f.ok=$("#ok")?.checked??f.ok;f.smurf=$("#smurf")?.checked??f.smurf;render()}
 function bindSubmit(){const fi=$("#file");if(fi)fi.onchange=()=>{if(!fi.files[0])return;if(f.url)URL.revokeObjectURL(f.url);f.file=fi.files[0];f.url=URL.createObjectURL(f.file);keep()};$("#send").onclick=send}
 async function send(){
- f.pseudo=$("#pseudo").value.trim();f.discord=$("#discord").value.trim();f.yt=$("#yt")?.value.trim()??f.yt;f.medal=$("#medal")?.value.trim()??f.medal;f.ok=$("#ok").checked;
+ f.pseudo=$("#pseudo").value.trim();f.discord=$("#discord").value.trim();f.yt=$("#yt")?.value.trim()??f.yt;f.medal=$("#medal")?.value.trim()??f.medal;f.ok=$("#ok").checked;f.smurf=$("#smurf")?.checked??false;
  const e=m=>{f.err=m;$("#err").textContent=m};
  if(f.tab==="yt"&&!ytId(f.yt||""))return e("Colle un lien YouTube valide.");
  if(f.tab==="medal"&&!medalId(f.medal||""))return e("Colle un lien Medal valide.");
@@ -168,11 +224,11 @@ async function send(){
  $("#send").disabled=true;$("#send").textContent="Envoi…";
  try{
   const fd=new FormData();
-  ["pseudo","discord","platform","rank"].forEach(k=>fd.append(k,f[k]||""));fd.append("div",f.rank==="Radiant"?0:f.div);fd.append("uid",uid);
+  ["pseudo","discord","platform","rank"].forEach(k=>fd.append(k,f[k]||""));fd.append("div",f.rank==="Radiant"?0:f.div);fd.append("uid",uid);fd.append("smurf",f.smurf);
   if(f.tab==="yt")fd.append("yt",ytId(f.yt));else if(f.tab==="medal")fd.append("medal",f.medal);else fd.append("video",f.file);
   const r=await fetch("/api/clips",{method:"POST",body:fd});
   if(!r.ok)throw new Error((await r.json()).error||r.status);
-  f={tab:"up",platform:"",rank:"",div:"",file:null,err:""};
+  f={tab:"up",platform:"",rank:"",div:"",file:null,err:"",smurf:false};
   $("#app").innerHTML=nav()+`<div class="card empty"><h1 class="title-game">Clip envoyé ✓</h1><p>Merci ! La communauté peut maintenant deviner ton rank.</p><button class="btn pink" onclick="location.hash='play'">Jouer avec la communauté →</button></div>`+foot();
   fetch("/api/clips?uid="+encodeURIComponent(uid)).then(r=>r.json()).then(d=>clips=d);
  }catch(x){e("Erreur d’envoi : "+(x.message||"réessaie"));$("#send").disabled=false;$("#send").textContent="Envoyer mon clip ›"}
@@ -186,11 +242,9 @@ function topView(){
 async function loadTopData(){
  try {
   const data=await (await fetch("/api/leaderboard")).json();
-  const rows=data.map((u,i)=>`<div class="lb-row"><div><b>#${i+1}</b> ${esc(u.pseudo)}</div><div><b>${u.correct}</b> / ${u.total} <small style="color:var(--mut)">(${Math.round(u.correct/u.total*100)}%)</small></div></div>`).join("");
+  const rows=data.map((u,i)=>`<div class="lb-row"><div style="display:flex;align-items:center;gap:10px;"><b>#${i+1}</b> ${u.avatar?`<img src="${u.avatar}" class="avatar-img">`:""} ${esc(u.pseudo)}</div><div><b>${u.correct}</b> / ${u.total} <small style="color:var(--mut)">(${Math.round(u.correct/u.total*100)}%)</small></div></div>`).join("");
   $("#lb-container").innerHTML = rows || "<div class='empty'>Aucun vote pour le moment. Sois le premier !</div>";
- } catch(e) {
-  $("#lb-container").innerHTML = "<div class='empty'>Erreur de chargement.</div>";
- }
+ } catch(e) { $("#lb-container").innerHTML = "<div class='empty'>Erreur de chargement.</div>"; }
 }
 
 /* ---------- JOUER & DEFI ---------- */
@@ -207,10 +261,10 @@ function playView(){
   ${defiMode?`<button class="btn pink" onclick="stopDefi()">Quitter le défi</button>`:`<button class="btn" onclick="startDefi()">🎯 Mode Défi (10 clips)</button>`}</div>
   <div class="pill">Série actuelle : 🔥 ${streak} ${streak>2?'<span class="badge">En feu !</span>':''} &nbsp;|&nbsp; Déjà joués · ${Object.keys(played).length}</div></div>`,
   
-  info:()=>c?`<div class="bar"><div><b style="font-size:17px">${esc(c.pseudo)}</b><span class="pill">${esc(c.platform)}</span>${played[c.id]?`<span class="pill">déjà joué</span>`:""}</div>
+  info:()=>c?`<div class="bar"><div><b style="font-size:17px">${esc(c.pseudo)}</b><span class="pill">${esc(c.platform)}</span>${c.smurf?`<span class="pill smurf">SMURF 🚨</span>`:""}${played[c.id]?`<span class="pill">déjà joué</span>`:""}</div>
    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
      ${!defiMode?`
-     <button class="btn" style="padding:8px 12px; color:#ff6b8b;" onclick="reportClip('${c.id}')">🚩 Signaler le clip</button>
+     <button class="btn" style="padding:8px 12px; color:#ff6b8b;" onclick="reportClip('${c.id}')">🚩 Signaler</button>
      <button class="btn" onclick="cur++;pick='';render()">Suivant →</button>`:`<b>Défi : ${defiCur+1}/${defiClips.length}</b>`}
    </div></div>`:"",
    
@@ -227,7 +281,7 @@ function playView(){
 function pickRank(r){pick=r;document.querySelectorAll("#pr .rk").forEach(e=>e.classList.toggle("on",e.dataset.r===r));$("#val").disabled=false}
 
 function startDefi(){
- if(!myPseudo){ myPseudo=prompt("Choisis un pseudo pour le classement :"); if(!myPseudo)return; sv("om_pseudo",myPseudo); }
+ if(!myPseudo){ openProfile(); return; }
  let pool = clips.filter(c => (filter==="all" || c.platform===filter) && !played[c.id]);
  pool.sort(() => Math.random() - 0.5);
  defiClips = pool.slice(0, 10);
@@ -237,26 +291,20 @@ function startDefi(){
 function stopDefi(){ defiMode=false; render(); }
 
 async function reportClip(id){
- if(!confirm("Veux-tu vraiment signaler ce clip à l'administrateur ?")) return;
- try {
-   await fetch("/api/clips/"+id+"/report",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reason:"Signalement utilisateur"})});
-   alert("Clip signalé avec succès ! L'administrateur va vérifier.");
- } catch(e) {
-   alert("Erreur lors du signalement.");
- }
+ if(!confirm("Signaler ce clip ?")) return;
+ try { await fetch("/api/clips/"+id+"/report",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reason:"Signalement"})}); alert("Signalé !"); } catch(e) {}
 }
 
 async function validate(id){
- if (played[id]) return alert("Tu as déjà voté pour ce clip ! Ta série n'a pas été augmentée.");
+ if (played[id]) return alert("Tu as déjà voté pour ce clip !");
  const c=clips.find(x=>x.id===id);if(!c)return;
- if(!myPseudo){ myPseudo=prompt("Quel pseudo pour le classement ?")||"Anonyme"; sv("om_pseudo",myPseudo); }
+ if(!myPseudo){ openProfile(); return; }
  
- const r=await fetch("/api/clips/"+id+"/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid,pseudo:myPseudo,rank:pick})});
+ const r=await fetch("/api/clips/"+id+"/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid,pseudo:myPseudo,avatar:myAvatar,rank:pick})});
  if(!r.ok)return alert("Erreur, réessaie.");
  const d=await r.json();played[id]=d.mine;sv("om_played",played);
  const ok=d.mine===d.rank;
- 
- if(ok){streak++; defiScore++;} else streak=0;
+ if(ok){ playSound('success'); streak++; defiScore++; } else { playSound('fail'); streak=0; }
  sv("om_streak",streak);
  
  if(defiMode){ modalDefi(d,ok); } 
@@ -265,6 +313,7 @@ async function validate(id){
 function modalDefi(d,ok){
  const m=document.createElement("div");m.className="modal";
  m.innerHTML=`<div class="mb"><div style="text-align:right;cursor:pointer" id="x">✕</div><div class="res ${ok?"ok":"ko"}">${ok?"BIEN JOUÉ !":"RATÉ !"}</div>
+ ${d.smurf?`<div style="text-align:center;color:#ff4d8d;font-weight:800;margin-bottom:10px;">🚨 C'ÉTAIT UN SMURF !</div>`:""}
  <p style="text-align:center;font-size:18px;font-weight:800;">${ok?"✔":"✖"} ${d.rank} ${d.div||""}</p>
  <button class="go" id="nx" style="margin-top:14px">${defiCur<defiClips.length-1?"Clip suivant ("+(defiCur+2)+"/"+defiClips.length+") →":"Voir mon score final 🏆"}</button></div>`;
  document.body.appendChild(m);
@@ -285,27 +334,52 @@ function modal(d,ok,clipId){
  const rows=R.map(([r,col])=>{const k=t[r]||0,p=tot?Math.round(k/tot*100):0;return `<div class="vr" style="--c:${col}"><div><span>${r}${r===my?` <small style="color:var(--p2)">TON CHOIX</small>`:""}</span><b>${p} % <small style="color:var(--mut)">(${k})</small></b></div><div class="t"><i style="width:${p}%"></i></div></div>`}).join("");
  const m=document.createElement("div");m.className="modal";
  m.innerHTML=`<div class="mb"><div style="text-align:right;cursor:pointer" id="x">✕</div><div class="res ${ok?"ok":"ko"}">${ok?"BIEN JOUÉ !":"RATÉ !"}</div>
+ ${d.smurf?`<div style="text-align:center;color:#ff4d8d;font-weight:800;margin-bottom:12px;">🚨 C'ÉTAIT UN SMURF !</div>`:""}
  ${streak>1?`<div style="text-align:center;color:#ff4d8d;font-weight:800;margin-bottom:12px;">🔥 Série : ${streak} d'affilée !</div>`:""}
  <div class="cmp"><div><small>TON CHOIX</small>${gem(my)}<b>${my}</b></div><div class="g"><small>SON VRAI RANK</small>${gem(d.rank)}<b>${d.rank}${d.div?" "+d.div:""}</b></div></div>
  <div class="acc" id="acc"><span>Voir les votes du public</span><span>${tot} vote${tot>1?"s":""} ⌄</span></div><div id="vt" hidden>${rows}<small style="color:var(--mut)">Votes du public au moment de ta validation.</small></div>
+ 
+ <div class="comments-box" id="cmt-box">
+   <small style="color:var(--mut)">Discussion :</small>
+   <div id="cmt-list" style="margin-top:8px;"></div>
+   <div style="display:flex;gap:8px;margin-top:8px;">
+     <input type="text" id="cmt-input" placeholder="Laisse un commentaire..." style="padding:8px; font-size:12px;">
+     <button class="btn" onclick="sendComment('${clipId}')" style="padding:8px 12px;">Envoyer</button>
+   </div>
+ </div>
+
  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
    <button class="btn" id="share">📤 Partager</button>
    <button class="btn" id="report" style="color:#ff6b8b">🚩 Signaler</button>
    <button class="go" id="nx" style="flex:1;min-width:120px">Next →</button>
  </div></div>`;
  document.body.appendChild(m);
+ 
+ loadComments(clipId);
+
  m.querySelector("#acc").onclick=()=>{const v=m.querySelector("#vt");v.hidden=!v.hidden};
  m.querySelector("#x").onclick=()=>m.remove();
  m.querySelector("#nx").onclick=()=>{m.remove();cur++;pick="";render();};
- m.querySelector("#share").onclick=()=>{
-   navigator.clipboard.writeText(location.origin+"#play");
-   m.querySelector("#share").textContent="✅ Lien copié !";
- };
- m.querySelector("#report").onclick=async()=>{
-   await reportClip(clipId);
-   m.querySelector("#report").textContent="✅ Signalé";
- };
+ m.querySelector("#share").onclick=()=>{ navigator.clipboard.writeText(location.origin+"#play"); m.querySelector("#share").textContent="✅ Lien copié !"; };
+ m.querySelector("#report").onclick=async()=>{ await reportClip(clipId); m.querySelector("#report").textContent="✅ Signalé"; };
 }
+
+async function loadComments(clipId){
+  try {
+    const r = await fetch("/api/clips/"+clipId+"/comments");
+    const cmts = await r.json();
+    const list = $("#cmt-list");
+    if(list) list.innerHTML = cmts.length ? cmts.map(c => `<div class="cmt"><b>${esc(c.pseudo)}</b> : ${esc(c.text)}</div>`).join("") : "<small style='color:var(--mut)'>Aucun commentaire.</small>";
+  } catch(e) {}
+}
+async function sendComment(clipId){
+  const input = $("#cmt-input");
+  if(!input.value.trim()) return;
+  await fetch("/api/clips/"+clipId+"/comment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pseudo:myPseudo,text:input.value})});
+  input.value = "";
+  loadComments(clipId);
+}
+
 addEventListener("hashchange",()=>{pick="";render()});
 (async()=>{
  try{S={...S,...await (await fetch("/api/settings")).json()}}catch(e){}
