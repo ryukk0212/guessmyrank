@@ -20,7 +20,7 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 .hd{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}.hd h1{margin:0}
 .me{display:flex;align-items:center;gap:10px;background:#150b13;border:1px solid #2e1827;border-radius:14px;padding:6px 6px 6px 8px}.me img,.me .av{width:34px;height:34px;border-radius:50%;background:#2e1827;object-fit:cover}.me b{display:block;line-height:1.1}.me small{font-size:11px}
 .vid-box{width:100%; max-width:500px; margin-top:12px; border-radius:12px; overflow:hidden; background:#000;}
-.vid-box video, .vid-box iframe{width:100%; aspect-ratio:16/9; display:block; border:0;}
+.vid-box video, .vid-box iframe, .vid-box img{width:100%; aspect-ratio:16/9; display:block; border:0; object-fit: contain;}
 .preview-container { background: radial-gradient(ellipse at 15% 0, #ff4d8d33 0, transparent 45%), radial-gradient(ellipse at 90% 60%, #ff4d8d22 0, transparent 45%), #0b060b; border-radius: 16px; border: 2px dashed #2e1827; padding: 20px; margin-top: 10px; overflow-x: auto;}
 .preview-container.over { border-color: #ff4d8d; }
 .preview-zone { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; min-height: 60px; margin: 20px 0; padding: 10px; border-radius: 12px; transition: 0.2s; align-items: flex-start;}
@@ -45,7 +45,7 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const getMedalId = u => { const m = String(u).match(/medal\.tv\/(?:games\/[^/]+\/)?clips?\/([a-zA-Z0-9]+)/); return m?m[1]:""; };
-let ME=null,cfg=null,tab="look",clips=[],reports=[],bans=[],comments=[], adminSearch="";
+let ME=null,cfg=null,tab="look",clips=[],reports=[],bans=[],comments=[],bugs=[], adminSearch="";
 const H=()=>({});
 const SL={clip:"Clip vidéo",rank:"Choix du rang",identity:"Pseudo + Discord",platform:"PC / Console",send:"Autorisation + envoi"};
 const PL={filters:"Filtres (Tous / PC / Console)",info:"Pseudo du joueur + navigation",video:"Vidéo",ranks:"Boutons de rang + validation"};
@@ -86,13 +86,14 @@ async function save(){const r=await fetch("/api/admin/settings",{method:"PUT",he
 async function loadData(){
  try {
   const r = await fetch("/api/admin/data",{headers:H()});
-  if(r.ok) { const d = await r.json(); clips=d.clips; reports=d.reports; bans=d.bans; comments=d.comments; draw(); }
+  if(r.ok) { const d = await r.json(); clips=d.clips; reports=d.reports; bans=d.bans; comments=d.comments; bugs=d.bugs; draw(); }
  } catch(e) { toast("Erreur"); }
 }
 
 async function delClip(id){if(confirm("Supprimer ce clip ?")){await fetch("/api/admin/clips/"+id,{method:"DELETE",headers:H()});loadData()}}
 async function delReport(id){if(confirm("Traiter ?")){await fetch("/api/admin/reports/"+id,{method:"DELETE",headers:H()});loadData()}}
 async function delComment(id){if(confirm("Supprimer ce commentaire ?")){await fetch("/api/admin/comments/"+id,{method:"DELETE",headers:H()});loadData()}}
+async function delBug(id){if(confirm("Marquer ce bug comme résolu ?")){await fetch("/api/admin/bugs/"+id,{method:"DELETE",headers:H()});loadData()}}
 async function banUser(uid, ip, pseudo){ if(confirm(`Bannir ${pseudo} ?`)) { await fetch("/api/admin/ban", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({uid, ip, pseudo})}); toast("Banni !"); loadData(); } }
 async function unbanUser(id){ if(confirm("Réhabiliter ?")) { await fetch("/api/admin/bans/"+id, {method:"DELETE", headers:H()}); loadData(); } }
 
@@ -110,7 +111,7 @@ const renderRealBtn = (l, i) => {
 }
 
 function draw(){
- const tabs=[["look","Apparence"],["links","Mise en page"],["layout","Ordre des blocs"],["clips","Clips"],["reports","Signalements"],["comments","Commentaires"],["bans","Bannis"]];let b="";
+ const tabs=[["look","Apparence"],["links","Mise en page"],["layout","Ordre des blocs"],["clips","Clips"],["reports","Signalements"],["comments","Commentaires"],["bugs","Bugs 🐞"],["bans","Bannis"]];let b="";
  
  if(tab==="look")b=`<div class="box"><div class="g2">${T("name","Nom du site",cfg.name)}${T("tagline","Sous-titre",cfg.tagline)}
  <label>Couleur principale<input type="color" data-k="accent" value="${cfg.accent}"></label><label>Couleur du fond<input type="color" data-k="bg" value="${cfg.bg}"></label>
@@ -145,13 +146,13 @@ function draw(){
  if(tab==="layout")b=`<div class="box"><b>Page d’envoi</b>`+cfg.submitBlocks.map((x,i)=>`<div class="row"><span>${SL[x.id]}</span><span><select data-k="submitBlocks.${i}.w"><option value="half" ${x.w!=="full"?"selected":""}>Demi</option><option value="full" ${x.w==="full"?"selected":""}>Pleine</option></select> <button onclick="mv('submitBlocks',${i},-1)">↑</button> <button onclick="mv('submitBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>
  <div class="box"><b>Page de jeu</b>`+cfg.playBlocks.map((x,i)=>`<div class="row"><span>${PL[x]}</span><span><button onclick="mv('playBlocks',${i},-1)">↑</button> <button onclick="mv('playBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>`;
 
- // STATS & CLIPS
  if(tab==="clips") {
    const filteredClips = clips.filter(c => c.pseudo.toLowerCase().includes(adminSearch.toLowerCase()));
    b=`<div class="stats-header">
      <div class="stat-card"><b>${clips.length}</b> Clips</div>
      <div class="stat-card"><b>${clips.reduce((acc,c)=>acc+ (c.votes||0),0)}</b> Votes</div>
      <div class="stat-card"><b>${reports.length}</b> Signalements</div>
+     <div class="stat-card"><b>${bugs.length}</b> Bugs</div>
    </div>
    <input type="text" class="search-bar" placeholder="🔍 Rechercher un pseudo..." oninput="adminSearch=this.value; draw()" value="${esc(adminSearch)}">
    <div class="box">${filteredClips.length?filteredClips.map(c=>`<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;"><div><b>${esc(c.pseudo)}</b> · <b style="color:var(--p)">${esc(c.rank)}${c.div?" "+c.div:""}</b> ${c.smurf?'<span style="color:#ff4d8d;font-weight:800;font-size:11px;border:1px solid #ff4d8d;padding:2px 6px;border-radius:8px;">SMURF</span>':''} · Discord : <b style="color:#5865f2">${esc(c.discord||"—")}</b></div><div style="display:flex;gap:8px;"><button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}')">Supprimer</button></div></div><div class="vid-box">${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}</div></div>`).join(""):"<small>Aucun clip trouvé.</small>"}</div>`;
@@ -161,16 +162,26 @@ function draw(){
 
  if(tab==="comments")b=`<div class="box"><b>Commentaires récents</b>${comments.length?comments.sort((a,b)=>b.date-a.date).map(c=>{const cl=clips.find(x=>x.id===c.clip);return `<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:10px;"><div><b>${esc(c.pseudo)}</b> sur <i>${cl?esc(cl.pseudo):"Clip supprimé"}</i> : "${esc(c.text)}"</div><button class="del" onclick="delComment('${esc(c.id)}')">Supprimer</button></div>`}).join(""):"<small>Aucun commentaire.</small>"}</div>`;
 
+ // BUGS TAB
+ if(tab==="bugs")b=`<div class="box">${bugs.length?bugs.sort((a,b)=>b.date-a.date).map(x=>`
+    <div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+        <div><b>${esc(x.pseudo)}</b> (${new Date(x.date).toLocaleDateString()})</div>
+        <button class="pk" onclick="delBug('${esc(x.id)}')">✅ Résolu</button>
+      </div>
+      <p style="background:#0e070d; padding:10px; border-radius:8px; white-space:pre-wrap;">${esc(x.desc)}</p>
+      ${x.media ? `<div class="vid-box">${x.media.includes('.mp4') ? `<video src="${esc(x.media)}" controls></video>` : `<img src="${esc(x.media)}">`}</div>` : ""}
+    </div>`).join(""):"<small>Aucun bug signalé.</small>"}</div>`;
+
  if(tab==="bans")b=`<div class="box"><b>Liste des bannis</b>${bans.length?bans.map(x=>`<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:10px;"><div><b>${esc(x.pseudo||"Inconnu")}</b> · IP: ${esc(x.ip||"—")}</div><button class="unban" onclick="unbanUser('${esc(x.id)}')">Unban</button></div>`).join(""):"<small>Aucun banni.</small>"}</div>`;
  
  $("#app").innerHTML=`<div class="hd"><h1>Admin · ${esc(cfg.name)}</h1><div class="me">${ME.avatar?`<img src="${esc(ME.avatar)}" alt="">`:`<div class="av"></div>`}<span><b>${esc(ME.name)}</b><small>${ME.owner?"Owner":"Admin"}</small></span><button onclick="logout()">Déconnexion</button></div></div>
- <div class="tabs">${tabs.map(([k,l])=>`<button class="${tab===k?"on":""}" onclick="tab='${k}';${['clips','reports','comments','bans'].includes(k)?'loadData()':'draw()'}">${l}</button>`).join("")}</div>${b}
+ <div class="tabs">${tabs.map(([k,l])=>`<button class="${tab===k?"on":""}" onclick="tab='${k}';${['clips','reports','comments','bugs','bans'].includes(k)?'loadData()':'draw()'}">${l}</button>`).join("")}</div>${b}
  <div class="bar"><button class="pk" onclick="save()" style="padding:12px 30px;font-size:16px;">💾 Enregistrer</button><button onclick="open('/','_blank')">Voir le site</button></div>`;
 }
 
 boot();
 
-// DRAG & DROP + RESIZE
 let dragI=null;
 document.addEventListener("dragstart",e=>{const t=e.target.closest?.(".lk-btn");if(!t)return;dragI=+t.dataset.i;t.style.opacity="0.4";e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","x");});
 document.addEventListener("dragend",()=>{dragI=null;document.querySelectorAll(".lk-btn").forEach(x=>x.style.opacity="1");document.querySelectorAll(".preview-zone, .preview-nav").forEach(x=>x.classList.remove("over"));});

@@ -6,7 +6,7 @@
 <style>
 :root{--bg:#0b060b;--card:#150b13;--line:#2e1827;--tx:#fbeff5;--mut:#b99aab;--p:#ff4d8d;--p2:color-mix(in srgb,var(--p) 55%,white);box-sizing:border-box}
 *{box-sizing:border-box}html,body{margin:0}
-body{background:radial-gradient(ellipse at 15% 0,color-mix(in srgb,var(--p) 20%,transparent) 0,transparent 45%),radial-gradient(ellipse at 90% 60%,color-mix(in srgb,var(--p) 14%,transparent) 0,transparent 45%),var(--bg);color:var(--tx);font:400 14px Manrope,system-ui,sans-serif;min-height:100vh;cursor:url('/cursor-normal.png'),auto;}
+body{background:radial-gradient(ellipse at 15% 0,color-mix(in srgb,var(--p) 20%,transparent) 0,transparent 45%),radial-gradient(ellipse at 90% 60%,color-mix(in srgb,var(--p) 14%,transparent) 0,transparent 45%),var(--bg);color:var(--tx);font:400 14px Manrope,system-ui,sans-serif;min-height:100vh;cursor:url('/cursor-normal.png'),auto; overflow-x: hidden;}
 a,button,.opt,.rk,.tabs span,input[type=checkbox]{cursor:url('/cursor-pointer.png'),pointer;}
 button,.rk,.opt{-webkit-tap-highlight-color:transparent; user-select:none;}
 #bgimg,#dim{position:fixed;inset:-60px;background-size:cover;background-position:center;z-index:0;pointer-events:none}#dim{inset:0;background:var(--bg);opacity:0}
@@ -25,7 +25,7 @@ h1{font:800 clamp(30px,6vw,48px) Syne;margin:6px 0 8px;letter-spacing:-1px}
 .step{display:flex;gap:12px;align-items:center;margin-bottom:14px}.step b{min-width:36px;height:36px;border:1px solid var(--p);color:var(--p2);border-radius:50%;display:grid;place-items:center;font-size:13px}.step h3{margin:0;font-size:17px}.step small{color:var(--mut)}
 .tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin:14px 0}.tabs span{padding:8px 0;color:var(--mut)}.tabs .on{color:var(--p2);border-bottom:2px solid var(--p)}
 .drop{border:1.5px dashed var(--line);border-radius:16px;height:190px;display:grid;place-items:center;text-align:center;color:var(--mut)}.drop b{color:var(--tx);font-size:16px}
-input[type=text]{width:100%;background:#0e070d;border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:14px;font:inherit}input:focus{outline:1px solid var(--p)}
+input[type=text], input[type=password], textarea{width:100%;background:#0e070d;border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:14px;font:inherit; font-family:inherit;}input:focus{outline:1px solid var(--p)}
 label.f{display:block;font-weight:600;font-size:12px;margin:12px 0 6px}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .opt{border:1px solid var(--line);background:#0e070d;border-radius:14px;padding:18px;display:flex;gap:10px;align-items:center}.opt i{width:18px;height:18px;border-radius:50%;border:2px solid #6b4a5d}.opt.on{border-color:var(--p);background:color-mix(in srgb,var(--p) 14%,#0e070d)}.opt.on i{background:var(--p);border-color:var(--p)}
 .ranks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.ranks.nine{grid-template-columns:repeat(9,1fr)}@media(max-width:700px){.ranks.nine{grid-template-columns:repeat(3,1fr)}}
@@ -63,7 +63,24 @@ video,iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background
 .avatar-opt.on{border-color:var(--p); box-shadow:0 0 10px var(--p);}
 .comments-box{margin-top:20px;border-top:1px solid var(--line);padding-top:15px;}
 .cmt{background:#0e070d;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;font-size:13px;}
-</style></head><body><div id="bgimg"></div><div id="dim"></div><div class="wrap" id="app"></div>
+
+/* NOEL & BUG BTN */
+.bug-btn{position:fixed;top:20px;right:20px;z-index:100;background:#150b13;border:1px solid var(--line);color:#fbeff5;padding:10px 16px;border-radius:30px;font-weight:800;display:flex;align-items:center;gap:8px;box-shadow:0 4px 15px #0008;transition:0.2s;}
+.bug-btn:hover{background:#ff4d8d;color:#1d0610;border-color:#ff4d8d;transform:translateY(-2px);}
+.snow{position:fixed;top:-10px;color:#fff;opacity:0.6;pointer-events:none;z-index:0;font-size:1.2rem;animation:fall linear infinite;}
+@keyframes fall{to{transform:translateY(105vh);}}
+.christmas-lights{display:flex;justify-content:center;gap:5px;margin-top:5px;}
+.light{width:10px;height:15px;border-radius:5px;background:red;box-shadow:0 0 10px red;animation:blink 2s infinite alternate;}
+.light:nth-child(2n){background:green;box-shadow:0 0 10px green;animation-delay:0.5s;}
+.light:nth-child(3n){background:gold;box-shadow:0 0 10px gold;animation-delay:1s;}
+@keyframes blink{from{opacity:0.4}to{opacity:1}}
+</style></head><body><div id="bgimg"></div><div id="dim"></div>
+
+<!-- BOUTON BUG & NEIGE -->
+<button class="bug-btn" onclick="openBug()">🐞 Signaler un bug</button>
+<div id="snow-container"></div>
+
+<div class="wrap" id="app"></div>
 <script>
 const R=[["Fer","#8a8f98"],["Bronze","#a9743b"],["Argent","#c5ccd6"],["Or","#f0b43c"],["Platine","#3fb5c9"],["Diamant","#b67cf2"],["Ascendant","#2fcf86"],["Immortel","#e0476b"],["Radiant","#f6e3a1"]];
 const C=n=>R.find(r=>r[0]===n)[1];
@@ -75,7 +92,20 @@ let uid=ls("om_uid",null);if(!uid){uid="u"+Math.random().toString(36).slice(2,12
 let myPseudo=ls("om_pseudo","");
 let myAvatar=ls("om_avatar","");
 
-// GESTION DES SONS (Web Audio API)
+// --- GENERATEUR DE NEIGE ---
+const snowContainer = document.getElementById('snow-container');
+for(let i=0; i<40; i++) {
+    let flake = document.createElement('div');
+    flake.className = 'snow';
+    flake.innerHTML = '❄';
+    flake.style.left = Math.random() * 100 + 'vw';
+    flake.style.animationDuration = Math.random() * 3 + 4 + 's';
+    flake.style.opacity = Math.random() * 0.7 + 0.1;
+    flake.style.fontSize = Math.random() * 15 + 10 + 'px';
+    snowContainer.appendChild(flake);
+}
+
+// --- GESTION DES SONS ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSound(type) {
   if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -115,6 +145,45 @@ const gem=n=>`<div class="gem" style="--c:${C(n)}"><img src="ranks/${n.toLowerCa
 const view=()=>location.hash==="#play"?"play":location.hash==="#top"?"top":"submit";
 const safe=u=>/^(https?:\/\/|mailto:)/i.test(u||"")?esc(u):"#";
 
+// --- BUG REPORT MODAL ---
+function openBug(){
+  const m = document.createElement("div"); m.className = "profile-modal";
+  m.innerHTML = `<div class="mb">
+    <div style="text-align:right;cursor:pointer" onclick="this.closest('.profile-modal').remove()">✕</div>
+    <h3 style="margin-top:0; color:#ff4d8d;">Signaler un bug 🐞</h3>
+    <label class="f">Ton Pseudo</label>
+    <input type="text" id="bug-pseudo" value="${esc(myPseudo)}" placeholder="Anonyme">
+    <label class="f" style="margin-top:15px">Description du bug</label>
+    <textarea id="bug-desc" rows="4" placeholder="Décris ce qui ne marche pas..."></textarea>
+    <label class="f" style="margin-top:15px">Capture d'écran ou Vidéo (Optionnel)</label>
+    <input type="file" id="bug-media" accept="image/*,video/*">
+    <button class="go" style="margin-top:20px;" onclick="sendBug(this)">Envoyer le rapport</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+async function sendBug(btn){
+  const pseudo = $("#bug-pseudo").value;
+  const desc = $("#bug-desc").value;
+  const file = $("#bug-media").files[0];
+  if(!desc) return alert("Décris le bug s'il te plaît !");
+  
+  const fd = new FormData();
+  fd.append("pseudo", pseudo);
+  fd.append("desc", desc);
+  if(file) fd.append("media", file);
+
+  btn.textContent = "Envoi..."; btn.disabled = true;
+  try {
+    const r = await fetch("/api/bugs", {method:"POST", body:fd});
+    if(r.ok) {
+      btn.closest('.profile-modal').innerHTML = `<div class="mb" style="text-align:center;"><h2>Merci !</h2><p>Ton rapport a bien été transmis. Je vais regarder ça.</p></div>`;
+      setTimeout(()=> btn.closest('.profile-modal').remove(), 3000);
+    } else { throw new Error("Erreur"); }
+  } catch(e) {
+    alert("Erreur d'envoi du bug."); btn.textContent = "Envoyer le rapport"; btn.disabled = false;
+  }
+}
+
 function apply(){
  const r=document.documentElement.style;r.setProperty("--p",S.accent);r.setProperty("--bg",S.bg);
  document.title=S.name+" · Guess My Rank";if(S.favicon)$("#fav").href=S.favicon;
@@ -142,7 +211,9 @@ function lk(l,sm){
  return `<a class="lk ${sm?"sm":l.big?"big":""}" style="--lc:${esc(l.color)};${sm&&!(l.w>0)?"":lsz(l)}" href="${safe(l.url)}" target="_blank" rel="noopener"><i>${ic}</i><span>${esc(l.label)}${!sm&&l.sub?`<small>${esc(l.sub)}</small>`:""}</span>${sm?"":"<em>↗</em>"}</a>`;
 }
 function nav(){
- return `<div class="logo">${esc(S.name)}</div><div class="sub">${esc(S.tagline)}</div>
+ return `<div class="logo">${esc(S.name)}</div>
+ <div class="christmas-lights"><div class="light"></div><div class="light"></div><div class="light"></div><div class="light"></div><div class="light"></div></div>
+ <div class="sub">${esc(S.tagline)}</div>
  <div class="nav">
  <button class="btn ${view()==="submit"?"pink":""}" onclick="location.hash='submit'">Envoyer mon clip</button>
  <button class="btn ${view()==="play"?"pink":""}" onclick="location.hash='play'">Jouer</button>
@@ -150,7 +221,7 @@ function nav(){
  <button class="btn" onclick="openProfile()">⚙️ Profil</button>
  ${S.links.filter(l=>l.pos==="top").map(l=>lk(l,1)).join("")}</div>`;
 }
-function foot(){return `<div class="foot">${S.links.filter(l=>l.pos==="bottom").map(l=>lk(l)).join("")}<div class="copy">— © ${new Date().getFullYear()} ${esc(S.name)} —</div></div>`}
+function foot(){return `<div class="foot">${S.links.filter(l=>l.pos==="bottom").map(l=>lk(l)).join("")}<div class="copy">— © ${new Date().getFullYear()} ${esc(S.name)} — Joyeuses fêtes 🎄</div></div>`}
 
 function render(){
   $("#app").innerHTML=nav()+(view()==="play"?playView():view()==="top"?topView():submitView())+foot();
@@ -158,7 +229,6 @@ function render(){
   if(view()==="top")loadTopData();
 }
 
-// GESTION DU PROFIL (Pseudo + Avatar)
 function openProfile(){
   const m = document.createElement("div"); m.className = "profile-modal";
   m.innerHTML = `<div class="mb">
@@ -186,21 +256,20 @@ function saveProfile(btn){
   render();
 }
 
-/* ---------- ENVOI ---------- */
 const hd=(n,t,s)=>`<div class="step">${n?`<b>${n}</b>`:""}<div><h3>${t}</h3>${s?`<small>${s}</small>`:""}</div></div>`;
 const BL={
  clip:n=>hd(n,"Le clip qui va me faire hésiter.","Entre 15 et 90 secondes, avec le son du jeu activé.")+`<div class="tabs"><span class="${f.tab==="up"?"on":""}" onclick="f.tab='up';keep()">⬆ Importer ma vidéo</span><span class="${f.tab==="yt"?"on":""}" onclick="f.tab='yt';keep()">Lien YouTube</span><span class="${f.tab==="medal"?"on":""}" onclick="f.tab='medal';keep()">Lien Medal</span></div>
  ${f.tab==="up"?(f.file&&f.url?`<div class="vprev"><video src="${f.url}" controls playsinline preload="metadata"></video><label class="chg"><input type="file" id="file" accept="video/*" hidden>${esc(f.file.name)} · ${(f.file.size/1048576).toFixed(1)} Mo · <u>changer de vidéo</u></label></div>`:`<label class="drop"><input type="file" id="file" accept="video/*" hidden><div>⬆<br><b>Glisse ta vidéo ici</b><br>ou clique pour choisir un fichier<br><small>MP4, WebM ou MOV · taille libre</small></div></label>`):""}
  ${f.tab==="yt"?`<input type="text" id="yt" placeholder="https://youtube.com/watch?v=..." value="${esc(f.yt||"")}" onchange="keep()">${ytId(f.yt||"")?`<div class="vprev"><iframe src="https://www.youtube-nocookie.com/embed/${ytId(f.yt)}" allowfullscreen></iframe></div>`:""}`:""}
  ${f.tab==="medal"?`<input type="text" id="medal" placeholder="https://medal.tv/games/..." value="${esc(f.medal||"")}" onchange="keep()">${medalId(f.medal||"")?`<div class="vprev"><iframe src="https://medal.tv/clip/${medalId(f.medal)}/embed" allowfullscreen></iframe></div>`:""}`:""}
- <p class="note">🛡 Ne montre pas ton RANK : ni dans le titre, ni dans ton pseudo, ni à l’écran.</p>`,
+ <p class="note">🛡 Ne montre pas ton RANK.</p>`,
  identity:n=>hd(n,"Qui se cache derrière le clip ?","Pour afficher ton nom et te joindre si ton clip est choisi.")+`<div class="two"><div><label class="f">Pseudo à afficher</label><input type="text" id="pseudo" placeholder="Ton pseudo" value="${esc(f.pseudo||"")}"></div><div><label class="f">Pseudo Discord</label><input type="text" id="discord" placeholder="ex. monpseudo" value="${esc(f.discord||"")}"></div></div>`,
  platform:n=>hd(n,"Sur quelle plateforme joues-tu ?","Indique sur quel support tu as enregistré ce clip.")+`<div class="two"><div class="opt ${f.platform==="PC"?"on":""}" onclick="f.platform='PC';keep()"><i></i>PC</div><div class="opt ${f.platform==="Console"?"on":""}" onclick="f.platform='Console';keep()"><i></i>Console</div></div>
  <label class="ck" style="margin-top:15px;color:#ff6b8b;"><input type="checkbox" id="smurf" ${f.smurf?"checked":""} onchange="f.smurf=this.checked;keep()"> 🚨 Mode Smurf (Ce joueur est beaucoup plus fort que son vrai rang)</label>`,
  rank:n=>hd(n,"Ton RANK. À eux de deviner.","Ton rank au moment où le clip a été enregistré.")+`<div class="ranks">${R.map(([r,c])=>`<div class="rk ${f.rank===r?"on":""}" style="--c:${c}" onclick="f.rank='${r}';f.div='';keep()">${gem(r)}${r}</div>`).join("")}</div>
  ${f.rank&&f.rank!=="Radiant"?`<div class="divs">${[1,2,3].map(d=>`<div class="opt ${f.div==d?"on":""}" onclick="f.div=${d};keep()"><i></i>${d}</div>`).join("")}</div>`:""}
  ${f.rank?`<p class="note">✔ ${esc(f.rank)}${f.div?" "+f.div:""}</p>`:""}`,
- send:()=>`<label class="chk"><input type="checkbox" id="ok" ${f.ok?"checked":""}> Ce clip est le mien. J’autorise sa publication sur ce site avec mon pseudo et la révélation de mon RANK après le vote.</label><button class="go" id="send">Envoyer mon clip ›</button><div class="err" id="err">${esc(f.err)}</div>`
+ send:()=>`<label class="chk"><input type="checkbox" id="ok" ${f.ok?"checked":""}> Ce clip est le mien. J’autorise sa publication.</label><button class="go" id="send">Envoyer mon clip ›</button><div class="err" id="err">${esc(f.err)}</div>`
 };
 function submitView(){
  let n=0,o=0;const items=S.submitBlocks.filter(b=>BL[b.id]).map(b=>`<div class="card ${b.w==="full"?"full":""}" style="order:${o++}">${BL[b.id](b.id==="send"?"":String(++n).padStart(2,"0"))}</div>`.replace(/^/,"")),
@@ -214,13 +283,13 @@ function bindSubmit(){const fi=$("#file");if(fi)fi.onchange=()=>{if(!fi.files[0]
 async function send(){
  f.pseudo=$("#pseudo").value.trim();f.discord=$("#discord").value.trim();f.yt=$("#yt")?.value.trim()??f.yt;f.medal=$("#medal")?.value.trim()??f.medal;f.ok=$("#ok").checked;f.smurf=$("#smurf")?.checked??false;
  const e=m=>{f.err=m;$("#err").textContent=m};
- if(f.tab==="yt"&&!ytId(f.yt||""))return e("Colle un lien YouTube valide.");
- if(f.tab==="medal"&&!medalId(f.medal||""))return e("Colle un lien Medal valide.");
+ if(f.tab==="yt"&&!ytId(f.yt||""))return e("Lien YouTube invalide.");
+ if(f.tab==="medal"&&!medalId(f.medal||""))return e("Lien Medal invalide.");
  if(f.tab==="up"&&!f.file)return e("Ajoute une vidéo.");
- if(!f.pseudo)return e("Ajoute un pseudo à afficher.");
+ if(!f.pseudo)return e("Ajoute un pseudo.");
  if(!f.platform)return e("Choisis PC ou Console.");
- if(!f.rank||(f.rank!=="Radiant"&&!f.div))return e("Sélectionne ton rank et ta division.");
- if(!f.ok)return e("Coche la case d’autorisation.");
+ if(!f.rank||(f.rank!=="Radiant"&&!f.div))return e("Sélectionne ton rank.");
+ if(!f.ok)return e("Coche la case.");
  $("#send").disabled=true;$("#send").textContent="Envoi…";
  try{
   const fd=new FormData();
@@ -229,25 +298,23 @@ async function send(){
   const r=await fetch("/api/clips",{method:"POST",body:fd});
   if(!r.ok)throw new Error((await r.json()).error||r.status);
   f={tab:"up",platform:"",rank:"",div:"",file:null,err:"",smurf:false};
-  $("#app").innerHTML=nav()+`<div class="card empty"><h1 class="title-game">Clip envoyé ✓</h1><p>Merci ! La communauté peut maintenant deviner ton rank.</p><button class="btn pink" onclick="location.hash='play'">Jouer avec la communauté →</button></div>`+foot();
+  $("#app").innerHTML=nav()+`<div class="card empty"><h1 class="title-game">Clip envoyé ✓</h1><p>Merci ! La communauté peut maintenant deviner ton rank.</p><button class="btn pink" onclick="location.hash='play'">Jouer →</button></div>`+foot();
   fetch("/api/clips?uid="+encodeURIComponent(uid)).then(r=>r.json()).then(d=>clips=d);
- }catch(x){e("Erreur d’envoi : "+(x.message||"réessaie"));$("#send").disabled=false;$("#send").textContent="Envoyer mon clip ›"}
+ }catch(x){e("Erreur : "+(x.message||"réessaie"));$("#send").disabled=false;$("#send").textContent="Envoyer mon clip ›"}
 }
 
-/* ---------- CLASSEMENT ---------- */
 function topView(){
  return `<div style="text-align:center;"><h1 class="title-game">Classement des devineurs</h1><p class="lead">Les meilleurs enquêteurs de ${esc(S.name)}.</p></div>
- <div class="card" id="lb-container"><div class="empty">Chargement du classement...</div></div>`;
+ <div class="card" id="lb-container"><div class="empty">Chargement...</div></div>`;
 }
 async function loadTopData(){
  try {
   const data=await (await fetch("/api/leaderboard")).json();
   const rows=data.map((u,i)=>`<div class="lb-row"><div style="display:flex;align-items:center;gap:10px;"><b>#${i+1}</b> ${u.avatar?`<img src="${u.avatar}" class="avatar-img">`:""} ${esc(u.pseudo)}</div><div><b>${u.correct}</b> / ${u.total} <small style="color:var(--mut)">(${Math.round(u.correct/u.total*100)}%)</small></div></div>`).join("");
-  $("#lb-container").innerHTML = rows || "<div class='empty'>Aucun vote pour le moment. Sois le premier !</div>";
- } catch(e) { $("#lb-container").innerHTML = "<div class='empty'>Erreur de chargement.</div>"; }
+  $("#lb-container").innerHTML = rows || "<div class='empty'>Aucun vote.</div>";
+ } catch(e) { $("#lb-container").innerHTML = "<div class='empty'>Erreur.</div>"; }
 }
 
-/* ---------- JOUER & DEFI ---------- */
 function playView(){
  let c = null;
  if (defiMode) { c = defiClips[defiCur]; } 
@@ -259,7 +326,7 @@ function playView(){
  const B={
   filters:()=>`<div class="bar"><div>${["all","PC","Console"].map(x=>`<button class="btn ${filter===x?"pink":""}" onclick="filter='${x}';cur=0;pick='';render()">${x==="all"?"Tous":x}</button>`).join(" ")}
   ${defiMode?`<button class="btn pink" onclick="stopDefi()">Quitter le défi</button>`:`<button class="btn" onclick="startDefi()">🎯 Mode Défi (10 clips)</button>`}</div>
-  <div class="pill">Série actuelle : 🔥 ${streak} ${streak>2?'<span class="badge">En feu !</span>':''} &nbsp;|&nbsp; Déjà joués · ${Object.keys(played).length}</div></div>`,
+  <div class="pill">Série : 🔥 ${streak} ${streak>2?'<span class="badge">En feu !</span>':''} &nbsp;|&nbsp; Joués · ${Object.keys(played).length}</div></div>`,
   
   info:()=>c?`<div class="bar"><div><b style="font-size:17px">${esc(c.pseudo)}</b><span class="pill">${esc(c.platform)}</span>${c.smurf?`<span class="pill smurf">SMURF 🚨</span>`:""}${played[c.id]?`<span class="pill">déjà joué</span>`:""}</div>
    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -269,7 +336,7 @@ function playView(){
    </div></div>`:"",
    
   video:()=>c?`<div class="card">${c.yt?`<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:c.medal?`<iframe src="https://medal.tv/clip/${medalId(c.medal)}/embed" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:`<video src="${esc(c.url)}" controls playsinline></video>`}</div>`
-   :`<div class="card empty"><h1 class="title-game">Tout est joué !</h1><p>Tu as deviné tous les clips disponibles pour le moment. Reviens plus tard !</p><br><button class="btn pink" onclick="location.hash='submit'">Envoyer un clip</button></div>`,
+   :`<div class="card empty"><h1 class="title-game">Tout est joué !</h1><p>Tu as deviné tous les clips. Reviens plus tard !</p><br><button class="btn pink" onclick="location.hash='submit'">Envoyer un clip</button></div>`,
    
   ranks:()=>c?`<div class="card"><div class="ranks nine" id="pr">${R.map(([r,col])=>`<div class="rk ${pick===r?"on":""}" data-r="${r}" style="--c:${col}" onclick="pickRank('${r}')">${gem(r)}${r}</div>`).join("")}</div>
    <button class="go" id="val" style="margin-top:14px" ${pick?"":"disabled"} onclick="validate('${c.id}')">Valider mon RANK →</button></div>`:""
@@ -285,7 +352,7 @@ function startDefi(){
  let pool = clips.filter(c => (filter==="all" || c.platform===filter) && !played[c.id]);
  pool.sort(() => Math.random() - 0.5);
  defiClips = pool.slice(0, 10);
- if (defiClips.length === 0) return alert("Tu as déjà joué à tous les clips disponibles !");
+ if (defiClips.length === 0) return alert("Tu as déjà joué à tous les clips !");
  defiMode=true; defiCur=0; defiScore=0; pick=""; render();
 }
 function stopDefi(){ defiMode=false; render(); }
@@ -296,12 +363,12 @@ async function reportClip(id){
 }
 
 async function validate(id){
- if (played[id]) return alert("Tu as déjà voté pour ce clip !");
+ if (played[id]) return alert("Tu as déjà voté !");
  const c=clips.find(x=>x.id===id);if(!c)return;
  if(!myPseudo){ openProfile(); return; }
  
  const r=await fetch("/api/clips/"+id+"/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid,pseudo:myPseudo,avatar:myAvatar,rank:pick})});
- if(!r.ok)return alert("Erreur, réessaie.");
+ if(!r.ok)return alert("Erreur.");
  const d=await r.json();played[id]=d.mine;sv("om_played",played);
  const ok=d.mine===d.rank;
  if(ok){ playSound('success'); streak++; defiScore++; } else { playSound('fail'); streak=0; }

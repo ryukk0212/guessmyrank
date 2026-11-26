@@ -37,7 +37,7 @@ async function uploadToB2(file, prefix = "") {
   return `https://${process.env.B2_BUCKET_NAME}.${process.env.B2_ENDPOINT}/${fileKey}`;
 }
 
-let db = { clips: [], votes: [], reports: [], bans: [], comments: [] };
+let db = { clips: [], votes: [], reports: [], bans: [], comments: [], bugs: [] };
 async function loadDb() {
   try {
     const data = await s3.send(new GetObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: "db.json" }));
@@ -45,7 +45,8 @@ async function loadDb() {
     db = JSON.parse(str);
     if (!db.reports) db.reports = [];
     if (!db.bans) db.bans = [];
-    if (!db.comments) db.comments = []; // Ajout des commentaires
+    if (!db.comments) db.comments = [];
+    if (!db.bugs) db.bugs = []; // Ajout des bugs
   } catch (err) { console.log("Nouvelle DB initialisée"); }
 }
 
@@ -81,13 +82,26 @@ const save = async () => {
 };
 
 const upload = multer({ storage: multer.memoryStorage(), fileFilter: (_, file, cb) => cb(null, /^video\//.test(file.mimetype)) });
+const uploadBug = multer({ storage: multer.memoryStorage(), fileFilter: (_, file, cb) => cb(null, /^(image|video)\//.test(file.mimetype)) });
+
+// ROUTE BUG REPORT
+app.post("/api/bugs", uploadBug.single("media"), async (req, res) => {
+  const { pseudo, desc } = req.body;
+  if(!desc) return res.status(400).json({ error: "Description requise" });
+  let mediaUrl = "";
+  if (req.file) {
+    try { mediaUrl = await uploadToB2(req.file, "bugs/"); } catch (err) { return res.status(500).json({ error: "Erreur upload" }); }
+  }
+  db.bugs.push({ id: id(), pseudo: clean(pseudo, 20) || "Anonyme", desc: clean(desc, 500), media: mediaUrl, date: Date.now() });
+  await save(); res.json({ ok: true });
+});
 
 app.get("/api/clips", (req, res) => { const me = clean(req.query.uid, 40); res.json(db.clips.filter(c => !me || c.uid !== me).map(({ id, pseudo, platform, yt, url, medal, smurf, created }) => ({ id, pseudo, platform, yt, url, medal, smurf, created }))); });
 
 app.post("/api/clips", upload.single("video"), async (req, res) => {
   const b = req.body, rank = clean(b.rank), yt = clean(b.yt, 11), medal = clean(b.medal, 200);
   const uid = clean(b.uid, 40);
-  const smurf = b.smurf === "true"; // NOUVEAU
+  const smurf = b.smurf === "true";
   
   const userIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
   const isBanned = db.bans.some(ban => ban.uid === uid || (ban.ip && ban.ip === userIp));
@@ -109,7 +123,7 @@ app.post("/api/clips", upload.single("video"), async (req, res) => {
 });
 
 app.post("/api/clips/:id/vote", async (req, res) => {
-  const c = db.clips.find(x => x.id === req.params.id), rank = req.body.rank, uid = clean(req.body.uid, 40), pseudo = clean(req.body.pseudo, 20) || "Anonyme", avatar = clean(req.body.avatar, 10) || "";
+  const c = db.clips.find(x => x.id === req.params.id), rank = req.body.rank, uid = clean(req.body.uid, 40), pseudo = clean(req.body.pseudo, 20) || "Anonyme", avatar = clean(req.body.avatar, 100) || "";
   if (!c || !RANKS.includes(rank) || !uid) return res.status(400).json({ error: "Invalide" });
   let v = db.votes.find(x => x.clip === c.id && x.uid === uid);
   if (!v) { v = { clip: c.id, uid, pseudo, avatar, rank }; db.votes.push(v); } else { v.pseudo = pseudo; v.avatar = avatar; v.rank = rank; }
@@ -119,7 +133,6 @@ app.post("/api/clips/:id/vote", async (req, res) => {
   res.json({ mine: v.rank, rank: c.rank, div: c.div, smurf: c.smurf, tally });
 });
 
-// NOUVEAU : Commentaires
 app.get("/api/clips/:id/comments", (req, res) => {
   res.json(db.comments.filter(c => c.clip === req.params.id).slice(-10));
 });
@@ -219,7 +232,7 @@ app.post("/api/admin/upload", auth, imgUp.single("img"), async (req, res) => {
   try { res.json({ url: await uploadToB2(req.file, "images/") }); } catch(err) { res.status(500).json({ error: "Erreur d'upload" }); }
 });
 
-app.get("/api/admin/data", auth, (_, res) => res.json({ clips: db.clips, reports: db.reports, bans: db.bans, comments: db.comments }));
+app.get("/api/admin/data", auth, (_, res) => res.json({ clips: db.clips, reports: db.reports, bans: db.bans, comments: db.comments, bugs: db.bugs }));
 
 app.post("/api/admin/ban", auth, async (req, res) => {
   const { uid, ip, pseudo } = req.body;
@@ -239,5 +252,6 @@ app.delete("/api/admin/clips/:id", auth, async (req, res) => {
 });
 app.delete("/api/admin/reports/:id", auth, async (req, res) => { db.reports = db.reports.filter(r => r.id !== req.params.id); await save(); res.json({ ok: true }); });
 app.delete("/api/admin/comments/:id", auth, async (req, res) => { db.comments = db.comments.filter(c => c.id !== req.params.id); await save(); res.json({ ok: true }); });
+app.delete("/api/admin/bugs/:id", auth, async (req, res) => { db.bugs = db.bugs.filter(b => b.id !== req.params.id); await save(); res.json({ ok: true }); });
 
 app.listen(PORT, () => console.log("onlymy sur http://localhost:" + PORT));
