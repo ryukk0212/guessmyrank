@@ -29,6 +29,7 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 </style></head><body><div class="w" id="app"></div><div id="t"></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const getMedalId = u => { const m = String(u).match(/medal\.tv\/(?:games\/[^/]+\/)?clips?\/([a-zA-Z0-9]+)/); return m?m[1]:""; };
 let ME=null,cfg=null,tab="look",clips=[],reports=[];
 const H=()=>({});
 const SL={clip:"Clip vidéo",rank:"Choix du rang",identity:"Pseudo + Discord",platform:"PC / Console",send:"Autorisation + envoi"};
@@ -53,7 +54,6 @@ function mv(a,i,d){const j=i+d;if(j<0||j>=cfg[a].length)return;[cfg[a][i],cfg[a]
 function addLink(){cfg.links.push({id:"l"+Date.now(),label:"Nouveau bouton",sub:"",url:"https://",color:"#ff4d8d",icon:"🔗",iconImg:"",pos:"bottom",big:false});draw()}
 function delLink(i){if(confirm("Supprimer ce bouton ?")){cfg.links.splice(i,1);draw()}}
 async function save(){const r=await fetch("/api/admin/settings",{method:"PUT",headers:{...H(),"Content-Type":"application/json"},body:JSON.stringify(cfg)});if(r.ok){cfg=await r.json();toast("Enregistré ✓");draw()}else toast("Erreur d’enregistrement")}
-
 async function loadClips(){
  try {
   const cRes = await fetch("/api/admin/contacts",{headers:H()});
@@ -99,7 +99,6 @@ function draw(){
  if(tab==="layout")b=`<div class="box"><b>Page d’envoi</b><p><small>Ordre et largeur.</small></p>`+cfg.submitBlocks.map((x,i)=>`<div class="row"><span>${SL[x.id]}</span><span><select data-k="submitBlocks.${i}.w"><option value="half" ${x.w!=="full"?"selected":""}>Demi</option><option value="full" ${x.w==="full"?"selected":""}>Pleine</option></select> <button onclick="mv('submitBlocks',${i},-1)">↑</button> <button onclick="mv('submitBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>
  <div class="box"><b>Page de jeu</b><p><small>Ordre des éléments.</small></p>`+cfg.playBlocks.map((x,i)=>`<div class="row"><span>${PL[x]}</span><span><button onclick="mv('playBlocks',${i},-1)">↑</button> <button onclick="mv('playBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>`;
  
- // MODIFICATION ICI : Ajout du lecteur vidéo intégré
  if(tab==="clips")b=`<div class="box">${clips.length?clips.map(c=>`
     <div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
@@ -109,7 +108,7 @@ function draw(){
         <button class="del" onclick="delClip('${esc(c.id)}')">Supprimer</button>
       </div>
       <div class="vid-box">
-        ${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}
+        ${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}
       </div>
     </div>
   `).join(""):"<small>Aucun clip pour le moment.</small>"}</div>`;

@@ -36,52 +36,44 @@ async function uploadToB2(file, prefix = "") {
   return `https://${process.env.B2_BUCKET_NAME}.${process.env.B2_ENDPOINT}/${fileKey}`;
 }
 
-// --- NOUVELLE GESTION DE LA BASE DE DONNÉES SUR B2 ---
 let db = { clips: [], votes: [], reports: [] };
-
 async function loadDb() {
   try {
     const data = await s3.send(new GetObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: "db.json" }));
     const str = await data.Body.transformToString();
     db = JSON.parse(str);
     if (!db.reports) db.reports = [];
-    console.log("DB chargée depuis Backblaze B2");
-  } catch (err) {
-    console.log("Nouvelle DB initialisée (fichier db.json introuvable sur B2)");
-  }
+  } catch (err) { console.log("Nouvelle DB initialisée"); }
 }
-// On charge la DB au démarrage
 loadDb();
 
 const save = async () => { 
   try {
-    await s3.send(new PutObjectCommand({ 
-      Bucket: process.env.B2_BUCKET_NAME, 
-      Key: "db.json", 
-      Body: JSON.stringify(db),
-      ContentType: "application/json"
-    })); 
-  } catch(e) { console.error("Erreur sauvegarde DB sur B2", e); }
+    await s3.send(new PutObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: "db.json", Body: JSON.stringify(db), ContentType: "application/json" })); 
+  } catch(e) { console.error("Erreur sauvegarde DB B2", e); }
 };
 
 const upload = multer({ storage: multer.memoryStorage(), fileFilter: (_, file, cb) => cb(null, /^video\//.test(file.mimetype)) });
 
-// --- ROUTES PUBLIQUES ---
-app.get("/api/clips", (req, res) => { const me = clean(req.query.uid, 40); res.json(db.clips.filter(c => !me || c.uid !== me).map(({ id, pseudo, platform, yt, url, created }) => ({ id, pseudo, platform, yt, url, created }))); });
+app.get("/api/clips", (req, res) => { const me = clean(req.query.uid, 40); res.json(db.clips.filter(c => !me || c.uid !== me).map(({ id, pseudo, platform, yt, url, medal, created }) => ({ id, pseudo, platform, yt, url, medal, created }))); });
 
 app.post("/api/clips", upload.single("video"), async (req, res) => {
-  const b = req.body, rank = clean(b.rank), yt = clean(b.yt, 11);
+  const b = req.body, rank = clean(b.rank), yt = clean(b.yt, 11), medal = clean(b.medal, 200);
   if (!RANKS.includes(rank) || !clean(b.pseudo) || !["PC", "Console"].includes(b.platform)) return res.status(400).json({ error: "Champs invalides" });
-  if (!req.file && !/^[\w-]{11}$/.test(yt)) return res.status(400).json({ error: "Vidéo ou lien YouTube manquant" });
+  if (!req.file && !/^[\w-]{11}$/.test(yt) && !medal) return res.status(400).json({ error: "Vidéo, YouTube ou Medal manquant" });
 
-  let videoUrl = undefined, videoYt = undefined;
+  let videoUrl = undefined, videoYt = undefined, videoMedal = undefined;
   if (req.file) {
     try { videoUrl = await uploadToB2(req.file, "videos/"); } catch (err) { return res.status(500).json({ error: "Erreur d'envoi vidéo" }); }
-  } else { videoYt = yt; }
+  } else if (medal) {
+    videoMedal = medal;
+  } else {
+    videoYt = yt;
+  }
 
   db.clips.push({ id: id(), uid: clean(b.uid, 40), pseudo: clean(b.pseudo), discord: clean(b.discord), platform: b.platform, rank,
     div: rank === "Radiant" ? 0 : Math.min(3, Math.max(1, +b.div || 1)),
-    yt: videoYt, url: videoUrl, created: Date.now() });
+    yt: videoYt, url: videoUrl, medal: videoMedal, created: Date.now() });
   await save(); res.json({ ok: true });
 });
 
@@ -116,7 +108,6 @@ app.post("/api/clips/:id/report", async (req, res) => {
   await save(); res.json({ ok: true });
 });
 
-// --- PARAMÈTRES ---
 const SET = path.join(__dirname, "data", "settings.json");
 const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff4d8d", bg: "#0b060b", bgImage: "", blur: 18, dim: 0.6, favicon: "",
   submitBlocks: ["clip","rank","identity","platform","send"].map(id => ({ id, w: id === "send" ? "full" : "half" })),
@@ -145,7 +136,6 @@ function sanitize(b = {}) {
       w: Math.min(460, Math.max(0, Math.round(+l.w || 0))) >= 80 ? Math.min(460, Math.round(+l.w)) : 0, h: Math.min(200, Math.max(0, Math.round(+l.h || 0))) >= 40 ? Math.min(200, Math.round(+l.h)) : 0 })) };
 }
 
-// --- AUTH ---
 const sign = v => crypto.createHmac("sha256", SESSION_SECRET).update(v).digest("base64url");
 const mk = o => { const p = Buffer.from(JSON.stringify(o)).toString("base64url"); return p + "." + sign(p); };
 const rd = t => { try { const [p, g] = String(t).split("."); const a = Buffer.from(sign(p)), b = Buffer.from(g || "");
@@ -179,7 +169,6 @@ app.post("/auth/logout", (_, res) => { setC(res, "sess", "", 0); res.json({ ok: 
 app.get("/api/admin/me", (req, res) => { const o = session(req); if (!o) return res.sendStatus(401);
   res.json({ id: o.id, name: o.name, avatar: o.avatar ? `https://cdn.discordapp.com/avatars/${o.id}/${o.avatar}.png?size=128` : "", owner: o.id === OWNERS[0] }); });
 
-// --- ADMIN UPLOAD ---
 const imgUp = multer({ storage: multer.memoryStorage(), fileFilter: (_, f, cb) => cb(null, /^image\/(png|jpeg|webp|gif|x-icon|vnd\.microsoft\.icon)$/.test(f.mimetype)) });
 
 app.get("/api/settings", (_, r) => r.json(settings));
@@ -191,7 +180,7 @@ app.post("/api/admin/upload", auth, imgUp.single("img"), async (req, res) => {
   try { res.json({ url: await uploadToB2(req.file, "images/") }); } catch(err) { res.status(500).json({ error: "Erreur d'upload" }); }
 });
 
-app.get("/api/admin/contacts", auth, (_, res) => res.json(db.clips.map(({ id, pseudo, discord, rank, div, yt, url }) => ({ id, pseudo, discord, rank, div, yt, url }))));
+app.get("/api/admin/contacts", auth, (_, res) => res.json(db.clips.map(({ id, pseudo, discord, rank, div, yt, url, medal }) => ({ id, pseudo, discord, rank, div, yt, url, medal }))));
 app.get("/api/admin/reports", auth, (_, res) => res.json(db.reports));
 
 app.delete("/api/admin/clips/:id", auth, async (req, res) => {

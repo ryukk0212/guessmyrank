@@ -17,7 +17,6 @@ a,button,.opt,.rk,.tabs span,input[type=checkbox]{cursor:url('/cursor-pointer.pn
 .btn.pink,.go{background:linear-gradient(135deg,var(--p),var(--p2));color:#1d0610;border:0;box-shadow:0 8px 30px color-mix(in srgb,var(--p) 35%,transparent)}
 .btn:disabled,.go:disabled{opacity:.45;cursor:not-allowed}
 h1{font:800 clamp(30px,6vw,48px) Syne;margin:6px 0 8px;letter-spacing:-1px}
-/* Nouvelle classe pour le titre du jeu */
 .title-game{font-family:'Bebas Neue',sans-serif;font-size:clamp(45px,9vw,75px);letter-spacing:2px;color:var(--tx);text-shadow:0 0 15px color-mix(in srgb,var(--p) 60%,transparent);margin:10px 0 5px;text-transform:uppercase;}
 .lead{color:var(--mut);margin:0 0 26px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.vprev{margin-top:4px}.vprev video,.vprev iframe{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:14px;background:#000;max-height:460px}.vprev iframe{margin-top:12px}.chg{display:block;text-align:center;font-size:13px;color:var(--mut);margin-top:10px;}.chg u{color:var(--p)}.full{grid-column:1/-1}.cols{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.col{display:flex;flex-direction:column;gap:20px}@media(max-width:820px){.cols{display:flex;flex-direction:column}.col{display:contents}}@media(max-width:820px){.grid{grid-template-columns:1fr}}
@@ -69,6 +68,7 @@ let S={name:"onlymy",tagline:"GUESS MY RANK · VALORANT",accent:"#ff4d8d",bg:"#0
 let clips=[],played=ls("om_played",{}),f={tab:"up",platform:"",rank:"",div:"",file:null,err:""},cur=0,filter="all",pick="";
 let streak=ls("om_streak",0), defiMode=false, defiCur=0, defiScore=0, defiClips=[];
 const ytId=u=>{const m=String(u).match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/);return m?m[1]:null};
+const medalId=u=>{const m=String(u).match(/medal\.tv\/(?:games\/[^/]+\/)?clips?\/([a-zA-Z0-9]+)/);return m?m[1]:null};
 const gem=n=>`<div class="gem" style="--c:${C(n)}"><img src="ranks/${n.toLowerCase()}.png" alt="" onload="this.parentNode.classList.add('img')" onerror="this.remove()"></div>`;
 const view=()=>location.hash==="#play"?"play":location.hash==="#top"?"top":"submit";
 const safe=u=>/^(https?:\/\/|mailto:)/i.test(u||"")?esc(u):"#";
@@ -101,8 +101,10 @@ function render(){
 /* ---------- ENVOI ---------- */
 const hd=(n,t,s)=>`<div class="step">${n?`<b>${n}</b>`:""}<div><h3>${t}</h3>${s?`<small>${s}</small>`:""}</div></div>`;
 const BL={
- clip:n=>hd(n,"Le clip qui va me faire hésiter.","Entre 15 et 90 secondes, avec le son du jeu activé.")+`<div class="tabs"><span class="${f.tab==="up"?"on":""}" onclick="f.tab='up';keep()">⬆ Importer ma vidéo</span><span class="${f.tab==="yt"?"on":""}" onclick="f.tab='yt';keep()">Lien YouTube</span></div>
- ${f.tab==="up"?(f.file&&f.url?`<div class="vprev"><video src="${f.url}" controls playsinline preload="metadata"></video><label class="chg"><input type="file" id="file" accept="video/*" hidden>${esc(f.file.name)} · ${(f.file.size/1048576).toFixed(1)} Mo · <u>changer de vidéo</u></label></div>`:`<label class="drop"><input type="file" id="file" accept="video/*" hidden><div>⬆<br><b>Glisse ta vidéo ici</b><br>ou clique pour choisir un fichier<br><small>MP4, WebM ou MOV · taille libre</small></div></label>`):`<input type="text" id="yt" placeholder="https://youtube.com/watch?v=..." value="${esc(f.yt||"")}" onchange="keep()">${ytId(f.yt||"")?`<div class="vprev"><iframe src="https://www.youtube-nocookie.com/embed/${ytId(f.yt)}" allowfullscreen></iframe></div>`:""}`}
+ clip:n=>hd(n,"Le clip qui va me faire hésiter.","Entre 15 et 90 secondes, avec le son du jeu activé.")+`<div class="tabs"><span class="${f.tab==="up"?"on":""}" onclick="f.tab='up';keep()">⬆ Importer ma vidéo</span><span class="${f.tab==="yt"?"on":""}" onclick="f.tab='yt';keep()">Lien YouTube</span><span class="${f.tab==="medal"?"on":""}" onclick="f.tab='medal';keep()">Lien Medal</span></div>
+ ${f.tab==="up"?(f.file&&f.url?`<div class="vprev"><video src="${f.url}" controls playsinline preload="metadata"></video><label class="chg"><input type="file" id="file" accept="video/*" hidden>${esc(f.file.name)} · ${(f.file.size/1048576).toFixed(1)} Mo · <u>changer de vidéo</u></label></div>`:`<label class="drop"><input type="file" id="file" accept="video/*" hidden><div>⬆<br><b>Glisse ta vidéo ici</b><br>ou clique pour choisir un fichier<br><small>MP4, WebM ou MOV · taille libre</small></div></label>`):""}
+ ${f.tab==="yt"?`<input type="text" id="yt" placeholder="https://youtube.com/watch?v=..." value="${esc(f.yt||"")}" onchange="keep()">${ytId(f.yt||"")?`<div class="vprev"><iframe src="https://www.youtube-nocookie.com/embed/${ytId(f.yt)}" allowfullscreen></iframe></div>`:""}`:""}
+ ${f.tab==="medal"?`<input type="text" id="medal" placeholder="https://medal.tv/games/..." value="${esc(f.medal||"")}" onchange="keep()">${medalId(f.medal||"")?`<div class="vprev"><iframe src="https://medal.tv/clip/${medalId(f.medal)}/embed" allowfullscreen></iframe></div>`:""}`:""}
  <p class="note">🛡 Ne montre pas ton RANK : ni dans le titre, ni dans ton pseudo, ni à l’écran.</p>`,
  identity:n=>hd(n,"Qui se cache derrière le clip ?","Pour afficher ton nom et te joindre si ton clip est choisi.")+`<div class="two"><div><label class="f">Pseudo à afficher</label><input type="text" id="pseudo" placeholder="Ton pseudo" value="${esc(f.pseudo||"")}"></div><div><label class="f">Pseudo Discord</label><input type="text" id="discord" placeholder="ex. monpseudo" value="${esc(f.discord||"")}"></div></div>`,
  platform:n=>hd(n,"Sur quelle plateforme joues-tu ?","Indique sur quel support tu as enregistré ce clip.")+`<div class="two"><div class="opt ${f.platform==="PC"?"on":""}" onclick="f.platform='PC';keep()"><i></i>PC</div><div class="opt ${f.platform==="Console"?"on":""}" onclick="f.platform='Console';keep()"><i></i>Console</div></div>`,
@@ -118,12 +120,13 @@ function submitView(){
  W.forEach((b,i)=>{if(b.w==="full"){flush();out+=items[i]}else run.push(items[i])});flush();
  return `<h1>Envoie ton clip à ${esc(S.name)}.</h1><p class="lead">Ajoute ta vidéo, ton pseudo et ton rank. À nous de deviner.</p><div class="grid">${out}</div>`;
 }
-function keep(){f.pseudo=$("#pseudo")?.value??f.pseudo;f.discord=$("#discord")?.value??f.discord;f.yt=$("#yt")?.value??f.yt;f.ok=$("#ok")?.checked??f.ok;render()}
+function keep(){f.pseudo=$("#pseudo")?.value??f.pseudo;f.discord=$("#discord")?.value??f.discord;f.yt=$("#yt")?.value??f.yt;f.medal=$("#medal")?.value??f.medal;f.ok=$("#ok")?.checked??f.ok;render()}
 function bindSubmit(){const fi=$("#file");if(fi)fi.onchange=()=>{if(!fi.files[0])return;if(f.url)URL.revokeObjectURL(f.url);f.file=fi.files[0];f.url=URL.createObjectURL(f.file);keep()};$("#send").onclick=send}
 async function send(){
- f.pseudo=$("#pseudo").value.trim();f.discord=$("#discord").value.trim();f.yt=$("#yt")?.value.trim()??f.yt;f.ok=$("#ok").checked;
+ f.pseudo=$("#pseudo").value.trim();f.discord=$("#discord").value.trim();f.yt=$("#yt")?.value.trim()??f.yt;f.medal=$("#medal")?.value.trim()??f.medal;f.ok=$("#ok").checked;
  const e=m=>{f.err=m;$("#err").textContent=m};
  if(f.tab==="yt"&&!ytId(f.yt||""))return e("Colle un lien YouTube valide.");
+ if(f.tab==="medal"&&!medalId(f.medal||""))return e("Colle un lien Medal valide.");
  if(f.tab==="up"&&!f.file)return e("Ajoute une vidéo.");
  if(!f.pseudo)return e("Ajoute un pseudo à afficher.");
  if(!f.platform)return e("Choisis PC ou Console.");
@@ -133,7 +136,7 @@ async function send(){
  try{
   const fd=new FormData();
   ["pseudo","discord","platform","rank"].forEach(k=>fd.append(k,f[k]||""));fd.append("div",f.rank==="Radiant"?0:f.div);fd.append("uid",uid);
-  if(f.tab==="yt")fd.append("yt",ytId(f.yt));else fd.append("video",f.file);
+  if(f.tab==="yt")fd.append("yt",ytId(f.yt));else if(f.tab==="medal")fd.append("medal",f.medal);else fd.append("video",f.file);
   const r=await fetch("/api/clips",{method:"POST",body:fd});
   if(!r.ok)throw new Error((await r.json()).error||r.status);
   f={tab:"up",platform:"",rank:"",div:"",file:null,err:""};
@@ -157,16 +160,13 @@ async function loadTopData(){
  }
 }
 
-/* ---------- JOUER & DEFI (CENTRÉ) ---------- */
+/* ---------- JOUER & DEFI ---------- */
 function playView(){
  let c = null;
- if (defiMode) {
-    c = defiClips[defiCur];
- } else {
+ if (defiMode) { c = defiClips[defiCur]; } 
+ else {
     const unplayed = clips.filter(x => (filter==="all" || x.platform===filter) && !played[x.id]).sort((a,b)=>a.created-b.created);
-    if (unplayed.length > 0) {
-       c = unplayed[cur % unplayed.length];
-    }
+    if (unplayed.length > 0) c = unplayed[cur % unplayed.length];
  }
 
  const B={
@@ -181,15 +181,14 @@ function playView(){
      <button class="btn" onclick="cur++;pick='';render()">Suivant →</button>`:`<b>Défi : ${defiCur+1}/${defiClips.length}</b>`}
    </div></div>`:"",
    
-  video:()=>c?`<div class="card">${c.yt?`<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:`<video src="${esc(c.url)}" controls playsinline></video>`}</div>`
+  video:()=>c?`<div class="card">${c.yt?`<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:c.medal?`<iframe src="https://medal.tv/clip/${medalId(c.medal)}/embed" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:`<video src="${esc(c.url)}" controls playsinline></video>`}</div>`
    :`<div class="card empty"><h1>Tout est joué !</h1><p>Tu as deviné tous les clips disponibles pour le moment. Reviens plus tard !</p><br><button class="btn pink" onclick="location.hash='submit'">Envoyer un clip</button></div>`,
    
   ranks:()=>c?`<div class="card"><div class="ranks nine" id="pr">${R.map(([r,col])=>`<div class="rk ${pick===r?"on":""}" data-r="${r}" style="--c:${col}" onclick="pickRank('${r}')">${gem(r)}${r}</div>`).join("")}</div>
    <button class="go" id="val" style="margin-top:14px" ${pick?"":"disabled"} onclick="validate('${c.id}')">Valider mon RANK →</button></div>`:""
  };
  
- // C'EST ICI QUE J'AI AJOUTÉ LE CENTRAGE
- return `<div style="text-align:center;"><h1 class="title-game">À toi de trouver le vrai rank</h1><p class="lead">Un clip. Ton instinct. La révélation.</p></div><div class="stack">${S.playBlocks.map(k=>B[k]?.()||"").join("")}</div>`;
+ return `<div style="text-align:center;"><h1 class="title-game">À toi de trouver le vrai rank.</h1><p class="lead">Un clip. Ton instinct. La révélation.</p></div><div class="stack">${S.playBlocks.map(k=>B[k]?.()||"").join("")}</div>`;
 }
 
 function pickRank(r){pick=r;document.querySelectorAll("#pr .rk").forEach(e=>e.classList.toggle("on",e.dataset.r===r));$("#val").disabled=false}
