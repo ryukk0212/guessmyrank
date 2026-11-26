@@ -2,7 +2,7 @@ const express = require("express"), multer = require("multer"), fs = require("fs
 const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 
 const app = express();
-app.set('trust proxy', true); // Nécessaire pour récupérer la vraie IP derrière Render
+app.set('trust proxy', true); // Pour récupérer la vraie IP
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -37,6 +37,7 @@ async function uploadToB2(file, prefix = "") {
   return `https://${process.env.B2_BUCKET_NAME}.${process.env.B2_ENDPOINT}/${fileKey}`;
 }
 
+// --- DB SUR BACKBLAZE ---
 let db = { clips: [], votes: [], reports: [], bans: [] };
 async function loadDb() {
   try {
@@ -44,7 +45,7 @@ async function loadDb() {
     const str = await data.Body.transformToString();
     db = JSON.parse(str);
     if (!db.reports) db.reports = [];
-    if (!db.bans) db.bans = []; // Initialise les bans si n'existent pas
+    if (!db.bans) db.bans = [];
   } catch (err) { console.log("Nouvelle DB initialisée"); }
 }
 loadDb();
@@ -63,12 +64,10 @@ app.post("/api/clips", upload.single("video"), async (req, res) => {
   const b = req.body, rank = clean(b.rank), yt = clean(b.yt, 11), medal = clean(b.medal, 200);
   const uid = clean(b.uid, 40);
   
-  // --- VÉRIFICATION DU BAN ---
+  // VÉRIFICATION DU BAN
   const userIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
   const isBanned = db.bans.some(ban => ban.uid === uid || (ban.ip && ban.ip === userIp));
-  if (isBanned) {
-    return res.status(403).json({ error: "Vous avez été banni et ne pouvez plus envoyer de clips." });
-  }
+  if (isBanned) return res.status(403).json({ error: "Vous avez été banni et ne pouvez plus envoyer de clips." });
 
   if (!RANKS.includes(rank) || !clean(b.pseudo) || !["PC", "Console"].includes(b.platform)) return res.status(400).json({ error: "Champs invalides" });
   if (!req.file && !/^[\w-]{11}$/.test(yt) && !medal) return res.status(400).json({ error: "Vidéo, YouTube ou Medal manquant" });
@@ -76,11 +75,8 @@ app.post("/api/clips", upload.single("video"), async (req, res) => {
   let videoUrl = undefined, videoYt = undefined, videoMedal = undefined;
   if (req.file) {
     try { videoUrl = await uploadToB2(req.file, "videos/"); } catch (err) { return res.status(500).json({ error: "Erreur d'envoi vidéo" }); }
-  } else if (medal) {
-    videoMedal = medal;
-  } else {
-    videoYt = yt;
-  }
+  } else if (medal) { videoMedal = medal; } 
+  else { videoYt = yt; }
 
   db.clips.push({ id: id(), uid, ip: userIp, pseudo: clean(b.pseudo), discord: clean(b.discord), platform: b.platform, rank,
     div: rank === "Radiant" ? 0 : Math.min(3, Math.max(1, +b.div || 1)),
@@ -119,20 +115,34 @@ app.post("/api/clips/:id/report", async (req, res) => {
   await save(); res.json({ ok: true });
 });
 
+// --- PARAMÈTRES SUR BACKBLAZE ---
 const SET = path.join(__dirname, "data", "settings.json");
 const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff4d8d", bg: "#0b060b", bgImage: "", blur: 18, dim: 0.6, favicon: "",
   submitBlocks: ["clip","rank","identity","platform","send"].map(id => ({ id, w: id === "send" ? "full" : "half" })),
   playBlocks: ["filters","info","video","ranks"],
   links: [
-    { id: "discord", label: "REJOINDRE LE DISCORD", sub: "La commu, les customs et les annonces", url: "https://discord.gg/onlymy", color: "#ff4d8d", icon: "💬", iconImg: "", pos: "bottom", big: true },
-    { id: "paypal", label: "Me soutenir", sub: "Un petit don via PayPal", url: "https://www.paypal.com/paypalme/slashair", color: "#4f8cff", icon: "💙", iconImg: "", pos: "bottom", big: false },
-    { id: "uwuanime", label: "UwUanime", sub: "Best site streaming anime / kdrama", url: "https://uwuanime.com/", color: "#ff6fa5", icon: "🎬", iconImg: "", pos: "bottom", big: false },
-    { id: "tiktok", label: "Mon TikTok", sub: "@.myybe, clips et lives", url: "https://www.tiktok.com/@.myybe", color: "#25f4ee", icon: "🎵", iconImg: "", pos: "bottom", big: false },
-    { id: "tunelio", label: "Tunelio", sub: "Outil d’optimisation PC · voir les offres !!", url: "https://tunelio.com/pricing", color: "#ff4d6d", icon: "⚡", iconImg: "", pos: "bottom", big: false },
-    { id: "contact", label: "Contact pro", sub: "contact.onlymy@gmail.com", url: "mailto:contact.onlymy@gmail.com", color: "#ea4335", icon: "✉️", iconImg: "", pos: "bottom", big: false }] };
-let settings = fs.existsSync(SET) ? { ...DEF, ...JSON.parse(fs.readFileSync(SET, "utf8")) } : DEF;
+    { id: "discord", label: "REJOINDRE LE DISCORD", sub: "La commu, les customs et les annonces", url: "https://discord.gg/onlymy", color: "#ff4d8d", icon: "💬", iconImg: "/logos/discord.png", pos: "bottom", big: true },
+    { id: "paypal", label: "Me soutenir", sub: "Un petit don via PayPal", url: "https://www.paypal.com/paypalme/slashair", color: "#4f8cff", icon: "💙", iconImg: "/logos/paypal.png", pos: "bottom", big: false },
+    { id: "uwuanime", label: "UwUanime", sub: "Best site streaming anime / kdrama", url: "https://uwuanime.com/", color: "#ff6fa5", icon: "🎬", iconImg: "/logos/uwuanime.png", pos: "bottom", big: false },
+    { id: "tiktok", label: "Mon TikTok", sub: "@.myybe, clips et lives", url: "https://www.tiktok.com/@.myybe", color: "#25f4ee", icon: "🎵", iconImg: "/logos/tiktok.png", pos: "bottom", big: false },
+    { id: "tunelio", label: "Tunelio", sub: "Outil d’optimisation PC · voir les offres !!", url: "https://tunelio.com/pricing", color: "#ff4d6d", icon: "⚡", iconImg: "/logos/tunelio.png", pos: "bottom", big: false },
+    { id: "contact", label: "Contact pro", sub: "contact.onlymy@gmail.com", url: "mailto:contact.onlymy@gmail.com", color: "#ea4335", icon: "✉️", iconImg: "/logos/gmail.png", pos: "bottom", big: false }] };
+
+let settings = DEF;
+async function loadSettings() {
+  try {
+    const data = await s3.send(new GetObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: "settings.json" }));
+    const str = await data.Body.transformToString();
+    settings = { ...DEF, ...JSON.parse(str) };
+  } catch (err) { 
+    if (fs.existsSync(SET)) settings = { ...DEF, ...JSON.parse(fs.readFileSync(SET, "utf8")) };
+  }
+}
+loadSettings();
+
 const col = (v, d) => /^#[0-9a-f]{6}$/i.test(v) ? v : d;
-const img = v => /^(https?:\/\/\S+|\/logos\/[\w.-]+\.png)$/i.test(v) ? v : "";
+// Accepte les liens http et le dossier /logos/
+const img = v => /^(https?:\/\/\S+|\/logos\/[\w.-]+\.png)$/i.test(v) ? v : ""; 
 const lnk = v => /^(https?:\/\/|mailto:)\S+$/i.test(String(v)) ? String(v).slice(0, 500) : "";
 const uniq = (arr, ids, f) => { const o = []; (Array.isArray(arr) ? arr : []).forEach(x => { const i = f(x); if (ids.includes(i) && !o.find(y => f(y) === i)) o.push(x); }); ids.forEach(i => { if (!o.find(y => f(y) === i)) o.push(i); }); return o; };
 
@@ -147,6 +157,7 @@ function sanitize(b = {}) {
       w: Math.min(460, Math.max(0, Math.round(+l.w || 0))) >= 80 ? Math.min(460, Math.round(+l.w)) : 0, h: Math.min(200, Math.max(0, Math.round(+l.h || 0))) >= 40 ? Math.min(200, Math.round(+l.h)) : 0 })) };
 }
 
+// --- AUTH ---
 const sign = v => crypto.createHmac("sha256", SESSION_SECRET).update(v).digest("base64url");
 const mk = o => { const p = Buffer.from(JSON.stringify(o)).toString("base64url"); return p + "." + sign(p); };
 const rd = t => { try { const [p, g] = String(t).split("."); const a = Buffer.from(sign(p)), b = Buffer.from(g || "");
@@ -180,11 +191,20 @@ app.post("/auth/logout", (_, res) => { setC(res, "sess", "", 0); res.json({ ok: 
 app.get("/api/admin/me", (req, res) => { const o = session(req); if (!o) return res.sendStatus(401);
   res.json({ id: o.id, name: o.name, avatar: o.avatar ? `https://cdn.discordapp.com/avatars/${o.id}/${o.avatar}.png?size=128` : "", owner: o.id === OWNERS[0] }); });
 
+// --- ADMIN ---
 const imgUp = multer({ storage: multer.memoryStorage(), fileFilter: (_, f, cb) => cb(null, /^image\/(png|jpeg|webp|gif|x-icon|vnd\.microsoft\.icon)$/.test(f.mimetype)) });
 
 app.get("/api/settings", (_, r) => r.json(settings));
 app.get("/admin", (_, r) => r.sendFile(path.join(__dirname, "public", "admin.html")));
-app.put("/api/admin/settings", auth, (req, res) => { settings = sanitize(req.body); fs.writeFileSync(SET, JSON.stringify(settings)); res.json(settings); });
+
+app.put("/api/admin/settings", auth, async (req, res) => { 
+  settings = sanitize(req.body); 
+  fs.writeFileSync(SET, JSON.stringify(settings)); // Sauvegarde locale (fallback)
+  try {
+    await s3.send(new PutObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: "settings.json", Body: JSON.stringify(settings), ContentType: "application/json" }));
+  } catch(e) { console.error("Erreur save settings B2", e); }
+  res.json(settings); 
+});
 
 app.post("/api/admin/upload", auth, imgUp.single("img"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Image invalide" });
@@ -195,23 +215,14 @@ app.get("/api/admin/contacts", auth, (_, res) => res.json(db.clips.map(({ id, ps
 app.get("/api/admin/reports", auth, (_, res) => res.json(db.reports));
 app.get("/api/admin/bans", auth, (_, res) => res.json(db.bans));
 
-// Route pour bannir un utilisateur
 app.post("/api/admin/ban", auth, async (req, res) => {
   const { uid, ip, pseudo } = req.body;
   if (!uid && !ip) return res.status(400).json({ error: "UID ou IP requis" });
   const alreadyBanned = db.bans.some(b => (uid && b.uid === uid) || (ip && b.ip === ip));
-  if (!alreadyBanned) {
-    db.bans.push({ id: id(), uid, ip, pseudo, date: Date.now() });
-    await save();
-  }
+  if (!alreadyBanned) { db.bans.push({ id: id(), uid, ip, pseudo, date: Date.now() }); await save(); }
   res.json({ ok: true });
 });
-
-// Route pour débannir
-app.delete("/api/admin/bans/:id", auth, async (req, res) => {
-  db.bans = db.bans.filter(b => b.id !== req.params.id);
-  await save(); res.json({ ok: true });
-});
+app.delete("/api/admin/bans/:id", auth, async (req, res) => { db.bans = db.bans.filter(b => b.id !== req.params.id); await save(); res.json({ ok: true }); });
 
 app.delete("/api/admin/clips/:id", auth, async (req, res) => {
   const c = db.clips.find(x => x.id === req.params.id);
@@ -221,9 +232,7 @@ app.delete("/api/admin/clips/:id", auth, async (req, res) => {
       await s3.send(new DeleteObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: `videos/${key}` }));
     } catch(e) { console.error("Erreur suppression B2", e); }
   }
-  db.clips = db.clips.filter(x => x.id !== req.params.id); 
-  db.votes = db.votes.filter(v => v.clip !== req.params.id); 
-  db.reports = db.reports.filter(r => r.clip !== req.params.id); 
+  db.clips = db.clips.filter(x => x.id !== req.params.id); db.votes = db.votes.filter(v => v.clip !== req.params.id); db.reports = db.reports.filter(r => r.clip !== req.params.id); 
   await save(); res.json({ ok: true }); 
 });
 

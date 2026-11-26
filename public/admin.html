@@ -100,7 +100,7 @@ function draw(){
  ${T(`links.${i}.label`,"Nom du bouton",l.label)}${T(`links.${i}.sub`,"Description",l.sub)}${T(`links.${i}.url`,"Lien (https://… ou mailto:…)",l.url)}
  <label>Couleur du bouton<input type="color" data-k="links.${i}.color" value="${l.color}"></label>
  <label>Emplacement<select data-k="links.${i}.pos"><option value="bottom" ${l.pos!=="top"?"selected":""}>En bas du site</option><option value="top" ${l.pos==="top"?"selected":""}>En haut (nav)</option></select></label>
-  <label>Logo prédéfini
+ <label>Logo prédéfini
    <select onchange="cfg.links[${i}].iconImg=this.value; cfg.links[${i}].icon=''; draw()">
      <option value="">-- Aucun --</option>
      <option value="/logos/discord.png" ${l.iconImg==="/logos/discord.png"?"selected":""}>Discord</option>
