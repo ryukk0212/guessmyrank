@@ -1,29 +1,21 @@
 const express = require("express"), multer = require("multer"), fs = require("fs"), path = require("path"), crypto = require("crypto");
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 
-// --- 1. INITIALISATION EXPRESS (TOUT EN HAUT) ---
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// --- 2. VARIABLES ET CONFIGURATION ---
 const PORT = process.env.PORT || 3000;
 const OWNERS = ["1511466511611461845", "1247495035361038410", "1305652757578907720"];
 const D_ID = process.env.DISCORD_CLIENT_ID || "", D_SECRET = process.env.DISCORD_CLIENT_SECRET || "";
 const REDIRECT = process.env.DISCORD_REDIRECT_URI || "http://localhost:" + PORT + "/auth/discord/callback";
 const SECURE = REDIRECT.startsWith("https://");
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
-const DB = path.join(__dirname, "data", "db.json");
 
-fs.mkdirSync(path.dirname(DB), { recursive: true });
-let db = fs.existsSync(DB) ? JSON.parse(fs.readFileSync(DB, "utf8")) : { clips: [], votes: [], reports: [] };
-if (!db.reports) db.reports = [];
-const save = () => { fs.writeFileSync(DB + ".tmp", JSON.stringify(db)); fs.renameSync(DB + ".tmp", DB); };
 const RANKS = ["Fer","Bronze","Argent","Or","Platine","Diamant","Ascendant","Immortel","Radiant"];
 const id = () => crypto.randomBytes(6).toString("hex");
 const clean = (s, n = 40) => String(s || "").trim().slice(0, n);
 
-// Configuration de Backblaze B2
 const s3 = new S3Client({
   endpoint: `https://${process.env.B2_ENDPOINT}`,
   region: process.env.B2_REGION,
@@ -33,7 +25,6 @@ const s3 = new S3Client({
   },
 });
 
-// Fonction d'upload vers B2
 async function uploadToB2(file, prefix = "") {
   const fileKey = `${prefix}${id()}${path.extname(file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, "")}`;
   await s3.send(new PutObjectCommand({
@@ -45,16 +36,39 @@ async function uploadToB2(file, prefix = "") {
   return `https://${process.env.B2_BUCKET_NAME}.${process.env.B2_ENDPOINT}/${fileKey}`;
 }
 
-// Stockage en mémoire
-const upload = multer({
-  storage: multer.memoryStorage(),
-  fileFilter: (_, file, cb) => cb(null, /^video\//.test(file.mimetype))
-});
+// --- NOUVELLE GESTION DE LA BASE DE DONNÉES SUR B2 ---
+let db = { clips: [], votes: [], reports: [] };
 
-// --- 3. ROUTES PUBLIQUES ---
+async function loadDb() {
+  try {
+    const data = await s3.send(new GetObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: "db.json" }));
+    const str = await data.Body.transformToString();
+    db = JSON.parse(str);
+    if (!db.reports) db.reports = [];
+    console.log("DB chargée depuis Backblaze B2");
+  } catch (err) {
+    console.log("Nouvelle DB initialisée (fichier db.json introuvable sur B2)");
+  }
+}
+// On charge la DB au démarrage
+loadDb();
+
+const save = async () => { 
+  try {
+    await s3.send(new PutObjectCommand({ 
+      Bucket: process.env.B2_BUCKET_NAME, 
+      Key: "db.json", 
+      Body: JSON.stringify(db),
+      ContentType: "application/json"
+    })); 
+  } catch(e) { console.error("Erreur sauvegarde DB sur B2", e); }
+};
+
+const upload = multer({ storage: multer.memoryStorage(), fileFilter: (_, file, cb) => cb(null, /^video\//.test(file.mimetype)) });
+
+// --- ROUTES PUBLIQUES ---
 app.get("/api/clips", (req, res) => { const me = clean(req.query.uid, 40); res.json(db.clips.filter(c => !me || c.uid !== me).map(({ id, pseudo, platform, yt, url, created }) => ({ id, pseudo, platform, yt, url, created }))); });
 
-// Upload d'un clip vers B2
 app.post("/api/clips", upload.single("video"), async (req, res) => {
   const b = req.body, rank = clean(b.rank), yt = clean(b.yt, 11);
   if (!RANKS.includes(rank) || !clean(b.pseudo) || !["PC", "Console"].includes(b.platform)) return res.status(400).json({ error: "Champs invalides" });
@@ -62,29 +76,21 @@ app.post("/api/clips", upload.single("video"), async (req, res) => {
 
   let videoUrl = undefined, videoYt = undefined;
   if (req.file) {
-    try {
-      videoUrl = await uploadToB2(req.file, "videos/");
-    } catch (err) {
-      console.error("Erreur B2 video:", err);
-      return res.status(500).json({ error: "Erreur d'envoi de la vidéo" });
-    }
-  } else {
-    videoYt = yt;
-  }
+    try { videoUrl = await uploadToB2(req.file, "videos/"); } catch (err) { return res.status(500).json({ error: "Erreur d'envoi vidéo" }); }
+  } else { videoYt = yt; }
 
   db.clips.push({ id: id(), uid: clean(b.uid, 40), pseudo: clean(b.pseudo), discord: clean(b.discord), platform: b.platform, rank,
     div: rank === "Radiant" ? 0 : Math.min(3, Math.max(1, +b.div || 1)),
     yt: videoYt, url: videoUrl, created: Date.now() });
-  save(); res.json({ ok: true });
+  await save(); res.json({ ok: true });
 });
 
-// Vote avec pseudo
-app.post("/api/clips/:id/vote", (req, res) => {
+app.post("/api/clips/:id/vote", async (req, res) => {
   const c = db.clips.find(x => x.id === req.params.id), rank = req.body.rank, uid = clean(req.body.uid, 40), pseudo = clean(req.body.pseudo, 20) || "Anonyme";
   if (!c || !RANKS.includes(rank) || !uid) return res.status(400).json({ error: "Invalide" });
   let v = db.votes.find(x => x.clip === c.id && x.uid === uid);
-  if (!v) { v = { clip: c.id, uid, pseudo, rank }; db.votes.push(v); save(); }
-  else { v.pseudo = pseudo; v.rank = rank; save(); }
+  if (!v) { v = { clip: c.id, uid, pseudo, rank }; db.votes.push(v); } else { v.pseudo = pseudo; v.rank = rank; }
+  await save();
   const tally = Object.fromEntries(RANKS.map(r => [r, 0]));
   db.votes.filter(x => x.clip === c.id).forEach(x => tally[x.rank]++);
   res.json({ mine: v.rank, rank: c.rank, div: c.div, tally });
@@ -100,18 +106,17 @@ app.get("/api/leaderboard", (req, res) => {
     stats[name].total++;
     if (v.rank === clip.rank) stats[name].correct++;
   });
-  const list = Object.values(stats).sort((a, b) => b.correct - a.correct || b.total - a.total).slice(0, 50);
-  res.json(list);
+  res.json(Object.values(stats).sort((a, b) => b.correct - a.correct || b.total - a.total).slice(0, 50));
 });
 
-app.post("/api/clips/:id/report", (req, res) => {
+app.post("/api/clips/:id/report", async (req, res) => {
   const c = db.clips.find(x => x.id === req.params.id);
   if (!c) return res.status(404).json({ error: "Clip introuvable" });
   db.reports.push({ id: id(), clip: c.id, reason: clean(req.body.reason, 100) || "Non précisé", date: Date.now() });
-  save(); res.json({ ok: true });
+  await save(); res.json({ ok: true });
 });
 
-// --- 4. RÉGLAGES + ADMIN ---
+// --- PARAMÈTRES ---
 const SET = path.join(__dirname, "data", "settings.json");
 const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff4d8d", bg: "#0b060b", bgImage: "", blur: 18, dim: 0.6, favicon: "",
   submitBlocks: ["clip","rank","identity","platform","send"].map(id => ({ id, w: id === "send" ? "full" : "half" })),
@@ -140,7 +145,7 @@ function sanitize(b = {}) {
       w: Math.min(460, Math.max(0, Math.round(+l.w || 0))) >= 80 ? Math.min(460, Math.round(+l.w)) : 0, h: Math.min(200, Math.max(0, Math.round(+l.h || 0))) >= 40 ? Math.min(200, Math.round(+l.h)) : 0 })) };
 }
 
-// --- 5. CONNEXION DISCORD ---
+// --- AUTH ---
 const sign = v => crypto.createHmac("sha256", SESSION_SECRET).update(v).digest("base64url");
 const mk = o => { const p = Buffer.from(JSON.stringify(o)).toString("base64url"); return p + "." + sign(p); };
 const rd = t => { try { const [p, g] = String(t).split("."); const a = Buffer.from(sign(p)), b = Buffer.from(g || "");
@@ -174,11 +179,8 @@ app.post("/auth/logout", (_, res) => { setC(res, "sess", "", 0); res.json({ ok: 
 app.get("/api/admin/me", (req, res) => { const o = session(req); if (!o) return res.sendStatus(401);
   res.json({ id: o.id, name: o.name, avatar: o.avatar ? `https://cdn.discordapp.com/avatars/${o.id}/${o.avatar}.png?size=128` : "", owner: o.id === OWNERS[0] }); });
 
-// Upload d'images admin vers B2
-const imgUp = multer({
-  storage: multer.memoryStorage(),
-  fileFilter: (_, f, cb) => cb(null, /^image\/(png|jpeg|webp|gif|x-icon|vnd\.microsoft\.icon)$/.test(f.mimetype))
-});
+// --- ADMIN UPLOAD ---
+const imgUp = multer({ storage: multer.memoryStorage(), fileFilter: (_, f, cb) => cb(null, /^image\/(png|jpeg|webp|gif|x-icon|vnd\.microsoft\.icon)$/.test(f.mimetype)) });
 
 app.get("/api/settings", (_, r) => r.json(settings));
 app.get("/admin", (_, r) => r.sendFile(path.join(__dirname, "public", "admin.html")));
@@ -186,10 +188,7 @@ app.put("/api/admin/settings", auth, (req, res) => { settings = sanitize(req.bod
 
 app.post("/api/admin/upload", auth, imgUp.single("img"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Image invalide" });
-  try {
-    const url = await uploadToB2(req.file, "images/");
-    res.json({ url });
-  } catch(err) { res.status(500).json({ error: "Erreur d'upload" }); }
+  try { res.json({ url: await uploadToB2(req.file, "images/") }); } catch(err) { res.status(500).json({ error: "Erreur d'upload" }); }
 });
 
 app.get("/api/admin/contacts", auth, (_, res) => res.json(db.clips.map(({ id, pseudo, discord, rank, div, yt, url }) => ({ id, pseudo, discord, rank, div, yt, url }))));
@@ -206,9 +205,9 @@ app.delete("/api/admin/clips/:id", auth, async (req, res) => {
   db.clips = db.clips.filter(x => x.id !== req.params.id); 
   db.votes = db.votes.filter(v => v.clip !== req.params.id); 
   db.reports = db.reports.filter(r => r.clip !== req.params.id); 
-  save(); res.json({ ok: true }); 
+  await save(); res.json({ ok: true }); 
 });
 
-app.delete("/api/admin/reports/:id", auth, (req, res) => { db.reports = db.reports.filter(r => r.id !== req.params.id); save(); res.json({ ok: true }); });
+app.delete("/api/admin/reports/:id", auth, async (req, res) => { db.reports = db.reports.filter(r => r.id !== req.params.id); await save(); res.json({ ok: true }); });
 
 app.listen(PORT, () => console.log("onlymy sur http://localhost:" + PORT));
