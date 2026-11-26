@@ -2,6 +2,7 @@ const express = require("express"), multer = require("multer"), fs = require("fs
 const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 
 const app = express();
+app.set('trust proxy', true); // Nécessaire pour récupérer la vraie IP derrière Render
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -36,13 +37,14 @@ async function uploadToB2(file, prefix = "") {
   return `https://${process.env.B2_BUCKET_NAME}.${process.env.B2_ENDPOINT}/${fileKey}`;
 }
 
-let db = { clips: [], votes: [], reports: [] };
+let db = { clips: [], votes: [], reports: [], bans: [] };
 async function loadDb() {
   try {
     const data = await s3.send(new GetObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: "db.json" }));
     const str = await data.Body.transformToString();
     db = JSON.parse(str);
     if (!db.reports) db.reports = [];
+    if (!db.bans) db.bans = []; // Initialise les bans si n'existent pas
   } catch (err) { console.log("Nouvelle DB initialisée"); }
 }
 loadDb();
@@ -59,6 +61,15 @@ app.get("/api/clips", (req, res) => { const me = clean(req.query.uid, 40); res.j
 
 app.post("/api/clips", upload.single("video"), async (req, res) => {
   const b = req.body, rank = clean(b.rank), yt = clean(b.yt, 11), medal = clean(b.medal, 200);
+  const uid = clean(b.uid, 40);
+  
+  // --- VÉRIFICATION DU BAN ---
+  const userIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
+  const isBanned = db.bans.some(ban => ban.uid === uid || (ban.ip && ban.ip === userIp));
+  if (isBanned) {
+    return res.status(403).json({ error: "Vous avez été banni et ne pouvez plus envoyer de clips." });
+  }
+
   if (!RANKS.includes(rank) || !clean(b.pseudo) || !["PC", "Console"].includes(b.platform)) return res.status(400).json({ error: "Champs invalides" });
   if (!req.file && !/^[\w-]{11}$/.test(yt) && !medal) return res.status(400).json({ error: "Vidéo, YouTube ou Medal manquant" });
 
@@ -71,7 +82,7 @@ app.post("/api/clips", upload.single("video"), async (req, res) => {
     videoYt = yt;
   }
 
-  db.clips.push({ id: id(), uid: clean(b.uid, 40), pseudo: clean(b.pseudo), discord: clean(b.discord), platform: b.platform, rank,
+  db.clips.push({ id: id(), uid, ip: userIp, pseudo: clean(b.pseudo), discord: clean(b.discord), platform: b.platform, rank,
     div: rank === "Radiant" ? 0 : Math.min(3, Math.max(1, +b.div || 1)),
     yt: videoYt, url: videoUrl, medal: videoMedal, created: Date.now() });
   await save(); res.json({ ok: true });
@@ -180,8 +191,27 @@ app.post("/api/admin/upload", auth, imgUp.single("img"), async (req, res) => {
   try { res.json({ url: await uploadToB2(req.file, "images/") }); } catch(err) { res.status(500).json({ error: "Erreur d'upload" }); }
 });
 
-app.get("/api/admin/contacts", auth, (_, res) => res.json(db.clips.map(({ id, pseudo, discord, rank, div, yt, url, medal }) => ({ id, pseudo, discord, rank, div, yt, url, medal }))));
+app.get("/api/admin/contacts", auth, (_, res) => res.json(db.clips.map(({ id, pseudo, discord, rank, div, yt, url, medal, ip, uid }) => ({ id, pseudo, discord, rank, div, yt, url, medal, ip, uid }))));
 app.get("/api/admin/reports", auth, (_, res) => res.json(db.reports));
+app.get("/api/admin/bans", auth, (_, res) => res.json(db.bans));
+
+// Route pour bannir un utilisateur
+app.post("/api/admin/ban", auth, async (req, res) => {
+  const { uid, ip, pseudo } = req.body;
+  if (!uid && !ip) return res.status(400).json({ error: "UID ou IP requis" });
+  const alreadyBanned = db.bans.some(b => (uid && b.uid === uid) || (ip && b.ip === ip));
+  if (!alreadyBanned) {
+    db.bans.push({ id: id(), uid, ip, pseudo, date: Date.now() });
+    await save();
+  }
+  res.json({ ok: true });
+});
+
+// Route pour débannir
+app.delete("/api/admin/bans/:id", auth, async (req, res) => {
+  db.bans = db.bans.filter(b => b.id !== req.params.id);
+  await save(); res.json({ ok: true });
+});
 
 app.delete("/api/admin/clips/:id", auth, async (req, res) => {
   const c = db.clips.find(x => x.id === req.params.id);

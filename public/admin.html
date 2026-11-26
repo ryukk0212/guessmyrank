@@ -4,7 +4,7 @@
 button,select,input,a,.tile{cursor:url('/cursor-pointer.png'),pointer;}
 .w{max-width:900px;margin:auto;padding:22px 16px 90px}h1{margin:0 0 16px;color:#ff4d8d}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}button,select,input{font:inherit}
-button{background:#1c0f19;border:1px solid #2e1827;color:#fbeff5;border-radius:10px;padding:9px 14px;}button.on,button.pk{background:#ff4d8d;color:#2a0716;border:0;font-weight:700}button.del{color:#ff6b8b}
+button{background:#1c0f19;border:1px solid #2e1827;color:#fbeff5;border-radius:10px;padding:9px 14px;}button.on,button.pk{background:#ff4d8d;color:#2a0716;border:0;font-weight:700}button.del{color:#ff6b8b}button.ban{color:#ff4d4d;border-color:#5a1a1a}button.unban{color:#2fcf86;border-color:#1a5a36}
 .box{background:#150b13;border:1px solid #2e1827;border-radius:16px;padding:16px;margin-bottom:14px}.row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.g2{grid-template-columns:1fr}}
 label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#b99aab}label.ck{flex-direction:row;align-items:center;gap:8px}
@@ -23,14 +23,13 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 .tile{position:relative;display:flex;align-items:center;gap:10px;background:#1c0f19;border:1px solid var(--lc,#ff4d8d);border-radius:14px;padding:8px 12px;overflow:hidden;user-select:none;touch-action:none}.tile.big{background:linear-gradient(135deg,var(--lc),#150b13)}.tile.drag{opacity:.35}
 .tile i{font-style:normal;width:34px;height:34px;flex:none;border-radius:10px;background:#0006;display:grid;place-items:center;overflow:hidden}.tile i img{width:100%;height:100%;object-fit:cover}.tile span{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tile small{display:block;font-weight:400}
 .rz{position:absolute;right:0;bottom:0;width:20px;height:20px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,#ff4d8d 50%);border-radius:0 0 12px 0}
-/* Style pour la vidéo admin */
 .vid-box{width:100%; max-width:500px; margin-top:12px; border-radius:12px; overflow:hidden; background:#000;}
 .vid-box video, .vid-box iframe{width:100%; aspect-ratio:16/9; display:block; border:0;}
 </style></head><body><div class="w" id="app"></div><div id="t"></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const getMedalId = u => { const m = String(u).match(/medal\.tv\/(?:games\/[^/]+\/)?clips?\/([a-zA-Z0-9]+)/); return m?m[1]:""; };
-let ME=null,cfg=null,tab="look",clips=[],reports=[];
+let ME=null,cfg=null,tab="look",clips=[],reports=[],bans=[];
 const H=()=>({});
 const SL={clip:"Clip vidéo",rank:"Choix du rang",identity:"Pseudo + Discord",platform:"PC / Console",send:"Autorisation + envoi"};
 const PL={filters:"Filtres (Tous / PC / Console)",info:"Pseudo du joueur + navigation",video:"Vidéo",ranks:"Boutons de rang + validation"};
@@ -54,14 +53,12 @@ function mv(a,i,d){const j=i+d;if(j<0||j>=cfg[a].length)return;[cfg[a][i],cfg[a]
 function addLink(){cfg.links.push({id:"l"+Date.now(),label:"Nouveau bouton",sub:"",url:"https://",color:"#ff4d8d",icon:"🔗",iconImg:"",pos:"bottom",big:false});draw()}
 function delLink(i){if(confirm("Supprimer ce bouton ?")){cfg.links.splice(i,1);draw()}}
 async function save(){const r=await fetch("/api/admin/settings",{method:"PUT",headers:{...H(),"Content-Type":"application/json"},body:JSON.stringify(cfg)});if(r.ok){cfg=await r.json();toast("Enregistré ✓");draw()}else toast("Erreur d’enregistrement")}
+
 async function loadClips(){
  try {
   const cRes = await fetch("/api/admin/contacts",{headers:H()});
   if(cRes.ok) clips = await cRes.json();
-  const rRes = await fetch("/api/admin/reports",{headers:H()});
-  if(rRes.ok) reports = await rRes.json();
-  tab = "clips"; 
-  draw();
+  tab = "clips"; draw();
  } catch(e) { toast("Erreur de chargement"); }
 }
 async function loadReports(){
@@ -70,16 +67,26 @@ async function loadReports(){
   if(cRes.ok) clips = await cRes.json();
   const rRes = await fetch("/api/admin/reports",{headers:H()});
   if(rRes.ok) reports = await rRes.json();
-  tab = "reports";
-  draw();
+  tab = "reports"; draw();
  } catch(e) { toast("Erreur de chargement"); }
 }
+async function loadBans(){
+ try {
+  const bRes = await fetch("/api/admin/bans",{headers:H()});
+  if(bRes.ok) bans = await bRes.json();
+  tab = "bans"; draw();
+ } catch(e) { toast("Erreur de chargement"); }
+}
+
 async function delClip(id){if(confirm("Supprimer ce clip et tous ses votes ?")){await fetch("/api/admin/clips/"+id,{method:"DELETE",headers:H()});loadClips()}}
 async function delReport(id){if(confirm("Marquer ce signalement comme traité ?")){await fetch("/api/admin/reports/"+id,{method:"DELETE",headers:H()});loadReports()}}
+async function banUser(uid, ip, pseudo){ if(confirm(`Bannir ${pseudo} ?`)) { await fetch("/api/admin/ban", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({uid, ip, pseudo})}); toast("Utilisateur banni !"); loadReports(); } }
+async function unbanUser(id){ if(confirm("Réhabiliter cet utilisateur ?")) { await fetch("/api/admin/bans/"+id, {method:"DELETE", headers:H()}); loadBans(); } }
+
 const T=(k,l,v,x="")=>`<label>${l}<input type="text" data-k="${k}" value="${esc(v)}" ${x}></label>`;
 
 function draw(){
- const tabs=[["look","Apparence"],["links","Boutons & liens"],["layout","Mise en page"],["clips","Clips & Historique"],["reports","Signalements"]];let b="";
+ const tabs=[["look","Apparence"],["links","Boutons & liens"],["layout","Mise en page"],["clips","Clips & Historique"],["reports","Signalements"],["bans","Bannis (Blacklist)"]];let b="";
  if(tab==="look")b=`<div class="box"><div class="g2">${T("name","Nom du site (remplace tous les « onlymy »)",cfg.name)}${T("tagline","Sous-titre",cfg.tagline)}
  <label>Couleur principale<input type="color" data-k="accent" value="${cfg.accent}"></label><label>Couleur du fond<input type="color" data-k="bg" value="${cfg.bg}"></label>
  <label>Photo de profil en fond<input type="file" accept="image/*" data-up="bgImage"><div class="pv" style="background-image:url('${esc(cfg.bgImage)}')"></div>${cfg.bgImage?`<button onclick="cfg.bgImage='';draw()">Retirer</button>`:""}</label>
@@ -102,22 +109,39 @@ function draw(){
  if(tab==="clips")b=`<div class="box">${clips.length?clips.map(c=>`
     <div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-        <div>
-          <b>${esc(c.pseudo)}</b> · <b style="color:var(--p)">${esc(c.rank)}${c.div?" "+c.div:""}</b> · Discord : <b style="color:#5865f2">${esc(c.discord||"—")}</b>
-        </div>
-        <button class="del" onclick="delClip('${esc(c.id)}')">Supprimer</button>
+        <div><b>${esc(c.pseudo)}</b> · <b style="color:var(--p)">${esc(c.rank)}${c.div?" "+c.div:""}</b> · Discord : <b style="color:#5865f2">${esc(c.discord||"—")}</b></div>
+        <div style="display:flex;gap:8px;"><button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}')">Supprimer</button></div>
       </div>
       <div class="vid-box">
         ${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}
       </div>
-    </div>
-  `).join(""):"<small>Aucun clip pour le moment.</small>"}</div>`;
+    </div>`).join(""):"<small>Aucun clip pour le moment.</small>"}</div>`;
 
- if(tab==="reports")b=`<div class="box">${reports.length?reports.map(r=>{const c=clips.find(x=>x.id===r.clip);return `<div class="row"><div>🚩 Signalement pour <b>${c?esc(c.pseudo):"Clip supprimé"}</b> (${new Date(r.date).toLocaleDateString()})</div><div><a href="${c?.url||`https://youtu.be/${c?.yt}`}" target="_blank" class="btn" style="text-decoration:none;color:#fbeff5;padding:6px 12px;">Voir clip</a> <button class="del" onclick="delReport('${esc(r.id)}')">Marquer traité</button></div></div>`}).join(""):"<small>Aucun signalement.</small>"}</div>`;
+ if(tab==="reports")b=`<div class="box">${reports.length?reports.map(r=>{
+    const c=clips.find(x=>x.id===r.clip);
+    return `<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+        <div>🚩 Signalement pour <b>${c?esc(c.pseudo):"Clip supprimé"}</b> (${new Date(r.date).toLocaleDateString()})</div>
+        <div style="display:flex;gap:8px;">
+          ${c?`<button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}');delReport('${esc(r.id)}')">Supprimer le clip</button>`:""}
+          <button class="pk" onclick="delReport('${esc(r.id)}')">Marquer traité</button>
+        </div>
+      </div>
+      ${c ? `<div class="vid-box">
+        ${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}
+      </div>` : "<small>Le clip a déjà été supprimé.</small>"}
+    </div>`;
+  }).join(""):"<small>Aucun signalement.</small>"}</div>`;
+
+ if(tab==="bans")b=`<div class="box"><b>Liste des bannis</b>${bans.length?bans.map(x=>`
+    <div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:10px;">
+      <div><b>${esc(x.pseudo||"Inconnu")}</b> · IP: ${esc(x.ip||"—")} · UID: <small>${esc(x.uid||"—")}</small></div>
+      <button class="unban" onclick="unbanUser('${esc(x.id)}')">Unban</button>
+    </div>`).join(""):"<small>Aucun utilisateur banni.</small>"}</div>`;
  
  $("#app").innerHTML=`<div class="hd"><h1>Admin · ${esc(cfg.name)}</h1><div class="me">${ME.avatar?`<img src="${esc(ME.avatar)}" alt="">`:`<div class="av"></div>`}<span><b>${esc(ME.name)}</b><small>${ME.owner?"Owner":"Admin"} · ${esc(ME.id)}</small></span><button onclick="logout()">Déconnexion</button></div></div>
  <div class="tabs">
-   ${tabs.map(([k,l])=>`<button class="${tab===k?"on":""}" onclick="${k==='clips'?'loadClips()':k==='reports'?'loadReports()':`tab='${k}';draw()`}">${l}</button>`).join("")}
+   ${tabs.map(([k,l])=>`<button class="${tab===k?"on":""}" onclick="${k==='clips'?'loadClips()':k==='reports'?'loadReports()':k==='bans'?'loadBans()':`tab='${k}';draw()`}">${l}</button>`).join("")}
  </div>${b}<div class="bar"><button class="pk" onclick="save()">Enregistrer</button><button onclick="open('/','_blank')">Voir le site</button></div>`;
 }
 boot();
