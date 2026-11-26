@@ -1,16 +1,16 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&display=swap" rel="stylesheet"><style>
 *{box-sizing:border-box}body{margin:0;background:#0b060b;color:#fbeff5;font:14px system-ui,sans-serif;cursor:url('/cursor-normal.png'),auto;}
-button,select,input,a,.tile{cursor:url('/cursor-pointer.png'),pointer;}
-.w{max-width:900px;margin:auto;padding:22px 16px 90px}h1{margin:0 0 16px;color:#ff4d8d}
+button,select,input,a{cursor:url('/cursor-pointer.png'),pointer;}
+.w{max-width:1000px;margin:auto;padding:22px 16px 90px}h1{margin:0 0 16px;color:#ff4d8d}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}button,select,input{font:inherit}
 button{background:#1c0f19;border:1px solid #2e1827;color:#fbeff5;border-radius:10px;padding:9px 14px;}button.on,button.pk{background:#ff4d8d;color:#2a0716;border:0;font-weight:700}button.del{color:#ff6b8b}button.ban{color:#ff4d4d;border-color:#5a1a1a}button.unban{color:#2fcf86;border-color:#1a5a36}
 .box{background:#150b13;border:1px solid #2e1827;border-radius:16px;padding:16px;margin-bottom:14px}.row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.g2{grid-template-columns:1fr}}
 label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#b99aab}label.ck{flex-direction:row;align-items:center;gap:8px}
 input[type=text],input[type=password],select{background:#0e070d;border:1px solid #2e1827;color:#fbeff5;border-radius:10px;padding:10px}input[type=color]{width:100%;height:40px;border:0;background:none;padding:0}
-.bar{position:fixed;bottom:0;left:0;right:0;background:#150b13ee;border-top:1px solid #2e1827;padding:12px;display:flex;gap:10px;justify-content:center}
-#t{position:fixed;top:14px;right:14px;background:#ff4d8d;color:#2a0716;padding:10px 16px;border-radius:10px;display:none;font-weight:700}
+.bar{position:fixed;bottom:0;left:0;right:0;background:#150b13ee;border-top:1px solid #2e1827;padding:12px;display:flex;gap:10px;justify-content:center;z-index:100;}
+#t{position:fixed;top:14px;right:14px;background:#ff4d8d;color:#2a0716;padding:10px 16px;border-radius:10px;display:none;font-weight:700;z-index:101;}
 .pv{height:90px;border-radius:12px;background:#222 center/cover;margin-top:6px}small{color:#b99aab}
 .lock{min-height:92vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 55%,#4a1626 0,transparent 55%)}
 .lk{width:56px;height:56px;border-radius:16px;border:1px solid #2e1827;background:#150b13;display:grid;place-items:center;color:#ff8fb8}
@@ -19,12 +19,31 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 .er{color:#ff6b8b;font-size:13px;background:#2a1021;border:1px solid #4a1626;border-radius:10px;padding:8px 14px}
 .hd{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}.hd h1{margin:0}
 .me{display:flex;align-items:center;gap:10px;background:#150b13;border:1px solid #2e1827;border-radius:14px;padding:6px 6px 6px 8px}.me img,.me .av{width:34px;height:34px;border-radius:50%;background:#2e1827;object-fit:cover}.me b{display:block;line-height:1.1}.me small{font-size:11px}
-.zone{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;min-height:90px;border:2px dashed #2e1827;border-radius:14px;padding:12px;margin:8px 0 16px}.zone.over{border-color:#ff4d8d;background:#1c0f19}
-.tile{position:relative;display:flex;align-items:center;gap:10px;background:#1c0f19;border:1px solid var(--lc,#ff4d8d);border-radius:14px;padding:8px 12px;overflow:hidden;user-select:none;touch-action:none}.tile.big{background:linear-gradient(135deg,var(--lc),#150b13)}.tile.drag{opacity:.35}
-.tile i{font-style:normal;width:34px;height:34px;flex:none;border-radius:10px;background:#0006;display:grid;place-items:center;overflow:hidden}.tile i img{width:100%;height:100%;object-fit:cover}.tile span{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tile small{display:block;font-weight:400}
-.rz{position:absolute;right:0;bottom:0;width:20px;height:20px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,#ff4d8d 50%);border-radius:0 0 12px 0}
 .vid-box{width:100%; max-width:500px; margin-top:12px; border-radius:12px; overflow:hidden; background:#000;}
 .vid-box video, .vid-box iframe{width:100%; aspect-ratio:16/9; display:block; border:0;}
+
+/* --- LE NOUVEAU DESIGN DU PREVIEW --- */
+.preview-container { background: radial-gradient(ellipse at 15% 0, #ff4d8d33 0, transparent 45%), radial-gradient(ellipse at 90% 60%, #ff4d8d22 0, transparent 45%), #0b060b; border-radius: 16px; border: 2px dashed #2e1827; padding: 20px; margin-top: 10px; overflow-x: auto;}
+.preview-container.over { border-color: #ff4d8d; }
+.preview-zone { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; min-height: 60px; margin: 20px 0; padding: 10px; border-radius: 12px; transition: 0.2s; align-items: flex-start;}
+.preview-zone.over { background: #ff4d8d11; box-shadow: inset 0 0 0 1px #ff4d8d; }
+
+/* COPIÉ DU SITE PUBLIC POUR UN VRAI RENDU */
+.lk{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:16px;border:1px solid #2e1827;background:#150b13e6;color:#fbeff5;text-decoration:none;font-weight:800;position:relative; cursor: grab; transition: box-shadow 0.2s, opacity 0.2s;}
+.lk:active { cursor: grabbing; }
+.lk i{width:42px;height:42px;border-radius:12px;background:color-mix(in srgb,var(--lc) 30%,#150b13);display:grid;place-items:center;font-size:20px;font-style:normal;overflow:hidden;flex:none}
+.lk i img{width:100%;height:100%;object-fit:cover}
+.lk span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lk small{display:block;font-weight:400;color:#b99aab;font-size:12px;white-space:normal;line-height:1.2;margin-top:2px;}
+.lk em{font-style:normal;opacity:.7}
+.lk.big{background:linear-gradient(135deg,var(--lc),color-mix(in srgb,var(--lc) 55%,white));color:#1d0610;border:0;box-shadow:0 8px 30px color-mix(in srgb,var(--lc) 35%,transparent)}
+.lk.big i{background:#fff4}
+.lk.big small{color:#1d0610cc}
+.lk.sm{width:auto;padding:8px 16px 8px 8px;border-radius:14px}
+.lk.sm i{width:30px;height:30px;font-size:15px;border-radius:9px}
+.rz{position:absolute;right:0;bottom:0;width:24px;height:24px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,#ff4d8d 50%);border-radius:0 0 14px 0;z-index:10;}
+.preview-nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 40px; padding: 10px; border-radius: 12px; border: 1px dashed #2e1827; transition: 0.2s;}
+.preview-nav.over { border-color: #ff4d8d; background: #ff4d8d11; }
 </style></head><body><div class="w" id="app"></div><div id="t"></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -34,6 +53,21 @@ const H=()=>({});
 const SL={clip:"Clip vidéo",rank:"Choix du rang",identity:"Pseudo + Discord",platform:"PC / Console",send:"Autorisation + envoi"};
 const PL={filters:"Filtres (Tous / PC / Console)",info:"Pseudo du joueur + navigation",video:"Vidéo",ranks:"Boutons de rang + validation"};
 const toast=m=>{const t=$("#t");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2200)};
+
+function getAutoLogo(l) {
+  if (l.iconImg) return l.iconImg;
+  const text = (l.label + " " + l.sub + " " + l.url).toLowerCase();
+  if (text.includes("discord")) return "/logos/discord.png";
+  if (text.includes("tiktok")) return "/logos/tiktok.png";
+  if (text.includes("paypal")) return "/logos/paypal.png";
+  if (text.includes("gmail") || text.includes("mailto:") || text.includes("contact")) return "/logos/gmail.png";
+  if (text.includes("tunelio")) return "/logos/tunelio.png";
+  if (text.includes("uwuanime")) return "/logos/uwuanime.png";
+  if (text.includes("medal")) return "/logos/medal.png";
+  if (text.includes("youtube") || text.includes("youtu.be")) return "/logos/youtube.png";
+  return null;
+}
+
 function loginView(){
  const err=new URLSearchParams(location.search).get("err"),M={denied:"Ce compte Discord n’a pas accès à l’espace admin.",state:"Connexion expirée, réessaie.",token:"Connexion Discord impossible, réessaie."};
  $("#app").innerHTML=`<div class="lock"><div class="lk"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
@@ -50,126 +84,181 @@ document.addEventListener("change",async e=>{const p=e.target.dataset.up,f=e.tar
  const fd=new FormData();fd.append("img",f);const r=await fetch("/api/admin/upload",{method:"POST",headers:H(),body:fd});
  if(r.ok){set(p,(await r.json()).url);draw()}else toast("Import impossible (PNG, JPG, WebP, GIF ou ICO)")});
 function mv(a,i,d){const j=i+d;if(j<0||j>=cfg[a].length)return;[cfg[a][i],cfg[a][j]]=[cfg[a][j],cfg[a][i]];draw()}
-function addLink(){cfg.links.push({id:"l"+Date.now(),label:"Nouveau bouton",sub:"",url:"https://",color:"#ff4d8d",icon:"🔗",iconImg:"",pos:"bottom",big:false});draw()}
+function addLink(){cfg.links.push({id:"l"+Date.now(),label:"Nouveau bouton",sub:"Description",url:"https://",color:"#ff4d8d",icon:"🔗",iconImg:"",pos:"bottom",big:false});draw()}
 function delLink(i){if(confirm("Supprimer ce bouton ?")){cfg.links.splice(i,1);draw()}}
 async function save(){const r=await fetch("/api/admin/settings",{method:"PUT",headers:{...H(),"Content-Type":"application/json"},body:JSON.stringify(cfg)});if(r.ok){cfg=await r.json();toast("Enregistré ✓");draw()}else toast("Erreur d’enregistrement")}
 
-async function loadClips(){
- try {
-  const cRes = await fetch("/api/admin/contacts",{headers:H()});
-  if(cRes.ok) clips = await cRes.json();
-  tab = "clips"; draw();
- } catch(e) { toast("Erreur de chargement"); }
-}
-async function loadReports(){
- try {
-  const cRes = await fetch("/api/admin/contacts",{headers:H()});
-  if(cRes.ok) clips = await cRes.json();
-  const rRes = await fetch("/api/admin/reports",{headers:H()});
-  if(rRes.ok) reports = await rRes.json();
-  tab = "reports"; draw();
- } catch(e) { toast("Erreur de chargement"); }
-}
-async function loadBans(){
- try {
-  const bRes = await fetch("/api/admin/bans",{headers:H()});
-  if(bRes.ok) bans = await bRes.json();
-  tab = "bans"; draw();
- } catch(e) { toast("Erreur de chargement"); }
-}
+async function loadClips(){ try { const cRes = await fetch("/api/admin/contacts",{headers:H()}); if(cRes.ok) clips = await cRes.json(); tab = "clips"; draw(); } catch(e) { toast("Erreur"); } }
+async function loadReports(){ try { const cRes = await fetch("/api/admin/contacts",{headers:H()}); if(cRes.ok) clips = await cRes.json(); const rRes = await fetch("/api/admin/reports",{headers:H()}); if(rRes.ok) reports = await rRes.json(); tab = "reports"; draw(); } catch(e) { toast("Erreur"); } }
+async function loadBans(){ try { const bRes = await fetch("/api/admin/bans",{headers:H()}); if(bRes.ok) bans = await bRes.json(); tab = "bans"; draw(); } catch(e) { toast("Erreur"); } }
 
-async function delClip(id){if(confirm("Supprimer ce clip et tous ses votes ?")){await fetch("/api/admin/clips/"+id,{method:"DELETE",headers:H()});loadClips()}}
-async function delReport(id){if(confirm("Marquer ce signalement comme traité ?")){await fetch("/api/admin/reports/"+id,{method:"DELETE",headers:H()});loadReports()}}
-async function banUser(uid, ip, pseudo){ if(confirm(`Bannir ${pseudo} ?`)) { await fetch("/api/admin/ban", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({uid, ip, pseudo})}); toast("Utilisateur banni !"); loadReports(); } }
-async function unbanUser(id){ if(confirm("Réhabiliter cet utilisateur ?")) { await fetch("/api/admin/bans/"+id, {method:"DELETE", headers:H()}); loadBans(); } }
+async function delClip(id){if(confirm("Supprimer ce clip ?")){await fetch("/api/admin/clips/"+id,{method:"DELETE",headers:H()});loadClips()}}
+async function delReport(id){if(confirm("Traiter ce signalement ?")){await fetch("/api/admin/reports/"+id,{method:"DELETE",headers:H()});loadReports()}}
+async function banUser(uid, ip, pseudo){ if(confirm(`Bannir ${pseudo} ?`)) { await fetch("/api/admin/ban", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({uid, ip, pseudo})}); toast("Banni !"); loadReports(); } }
+async function unbanUser(id){ if(confirm("Réhabiliter ?")) { await fetch("/api/admin/bans/"+id, {method:"DELETE", headers:H()}); loadBans(); } }
 
 const T=(k,l,v,x="")=>`<label>${l}<input type="text" data-k="${k}" value="${esc(v)}" ${x}></label>`;
 
+// GÉNÉRATION DU VRAI BOUTON POUR LA DEMO
+const renderRealBtn = (l, i) => {
+  const autoLogo = getAutoLogo(l);
+  const ic = autoLogo ? `<img src="${esc(autoLogo)}" alt="">` : esc(l.icon||"🔗");
+  const w = l.w > 0 ? l.w : (l.big ? 420 : 210);
+  const h = l.h > 0 ? `min-height:${l.h}px;` : '';
+  return `<div class="lk ${l.big?"big":""}" draggable="true" data-i="${i}" style="--lc:${esc(l.color)};width:${w}px;${h}">
+    <i>${ic}</i>
+    <span>${esc(l.label)}${l.sub?`<small>${esc(l.sub)}</small>`:""}</span>
+    <em>↗</em>
+    <div class="rz" data-i="${i}" title="Glisser pour redimensionner"></div>
+  </div>`;
+}
+
 function draw(){
- const tabs=[["look","Apparence"],["links","Boutons & liens"],["layout","Mise en page"],["clips","Clips & Historique"],["reports","Signalements"],["bans","Bannis (Blacklist)"]];let b="";
- if(tab==="look")b=`<div class="box"><div class="g2">${T("name","Nom du site (remplace tous les « onlymy »)",cfg.name)}${T("tagline","Sous-titre",cfg.tagline)}
+ const tabs=[["look","Apparence"],["links","Mise en page & Boutons"],["layout","Ordre des blocs"],["clips","Clips & Historique"],["reports","Signalements"],["bans","Bannis (Blacklist)"]];let b="";
+ 
+ if(tab==="look")b=`<div class="box"><div class="g2">${T("name","Nom du site",cfg.name)}${T("tagline","Sous-titre",cfg.tagline)}
  <label>Couleur principale<input type="color" data-k="accent" value="${cfg.accent}"></label><label>Couleur du fond<input type="color" data-k="bg" value="${cfg.bg}"></label>
  <label>Photo de profil en fond<input type="file" accept="image/*" data-up="bgImage"><div class="pv" style="background-image:url('${esc(cfg.bgImage)}')"></div>${cfg.bgImage?`<button onclick="cfg.bgImage='';draw()">Retirer</button>`:""}</label>
  <div><label><span>Flou : ${cfg.blur}px</span><input type="range" min="0" max="80" value="${cfg.blur}" data-k="blur" oninput="this.previousSibling.textContent='Flou : '+this.value+'px'"></label><br>
  <label><span>Assombrissement : ${Math.round(cfg.dim*100)}%</span><input type="range" min="0" max="95" value="${Math.round(cfg.dim*100)}" data-k="dim" data-d="100" oninput="this.previousSibling.textContent='Assombrissement : '+this.value+'%'"></label></div>
- <label>Icône du site (onglet du navigateur)<input type="file" accept="image/*" data-up="favicon">${cfg.favicon?`<img src="${esc(cfg.favicon)}" width="40"><button onclick="cfg.favicon='';draw()">Retirer</button>`:"<small>Aucune : icône par défaut</small>"}</label></div></div>`;
- const tile=(l,i)=>`<div class="tile ${l.big?"big":""}" draggable="true" data-i="${i}" style="--lc:${esc(l.color)};width:${l.w>0?l.w:(l.big?420:210)}px;${l.h>0?`height:${l.h}px;`:""}"><i>${l.iconImg?`<img src="${esc(l.iconImg)}" alt="">`:esc(l.icon||"🔗")}</i><span>${esc(l.label)}${l.sub?`<small>${esc(l.sub)}</small>`:""}</span><div class="rz" data-i="${i}"></div></div>`;
- const zone=p=>`<div class="zone" data-zone="${p}">${cfg.links.map((l,i)=>l.pos===p?tile(l,i):"").join("")}</div>`;
- if(tab==="links")b=`<div class="box"><b>Disposition des boutons</b><p><small>Glisse un bouton pour le déplacer, tire le coin rose pour changer sa taille.</small></p>
- <small>EN HAUT (nav)</small>${zone("top")}<small>EN BAS DU SITE</small>${zone("bottom")}<button onclick="cfg.links.forEach(l=>{l.w=0;l.h=0});draw()">Réinitialiser les tailles</button></div>`+cfg.links.map((l,i)=>`<div class="box"><div class="row"><b>${esc(l.label)}</b><span><button onclick="mv('links',${i},-1)">↑</button> <button onclick="mv('links',${i},1)">↓</button> <button class="del" onclick="delLink(${i})">Supprimer</button></span></div><div class="g2">
- ${T(`links.${i}.label`,"Nom du bouton",l.label)}${T(`links.${i}.sub`,"Description",l.sub)}${T(`links.${i}.url`,"Lien (https://… ou mailto:…)",l.url)}
- <label>Couleur du bouton<input type="color" data-k="links.${i}.color" value="${l.color}"></label>
- <label>Emplacement<select data-k="links.${i}.pos"><option value="bottom" ${l.pos!=="top"?"selected":""}>En bas du site</option><option value="top" ${l.pos==="top"?"selected":""}>En haut (nav)</option></select></label>
- <label>Logo prédéfini
-   <select onchange="cfg.links[${i}].iconImg=this.value; cfg.links[${i}].icon=''; draw()">
-     <option value="">-- Aucun --</option>
-     <option value="/logos/discord.png" ${l.iconImg==="/logos/discord.png"?"selected":""}>Discord</option>
-     <option value="/logos/paypal.png" ${l.iconImg==="/logos/paypal.png"?"selected":""}>PayPal</option>
-     <option value="/logos/tiktok.png" ${l.iconImg==="/logos/tiktok.png"?"selected":""}>TikTok</option>
-     <option value="/logos/gmail.png" ${l.iconImg==="/logos/gmail.png"?"selected":""}>Gmail (Contact)</option>
-     <option value="/logos/tunelio.png" ${l.iconImg==="/logos/tunelio.png"?"selected":""}>Tunelio</option>
-     <option value="/logos/uwuanime.png" ${l.iconImg==="/logos/uwuanime.png"?"selected":""}>UwUanime</option>
-     <option value="/logos/medal.png" ${l.iconImg==="/logos/medal.png"?"selected":""}>Medal</option>
-     <option value="/logos/youtube.png" ${l.iconImg==="/logos/youtube.png"?"selected":""}>YouTube</option>
-   </select>
- </label>
- ${T(`links.${i}.icon`,"Ou Icône (emoji)",l.icon,'maxlength="4"')}
- <label>Ou importer une image de ton PC<input type="file" accept="image/*" data-up="links.${i}.iconImg">${l.iconImg&&l.iconImg.includes('https')?`<img src="${esc(l.iconImg)}" width="36"><button onclick="cfg.links[${i}].iconImg='';draw()">Retirer</button>`:""}</label>
- <label class="ck"><input type="checkbox" data-k="links.${i}.big" ${l.big?"checked":""}> Grand bouton mis en avant</label></div></div>`).join("")+`<button class="pk" onclick="addLink()">+ Ajouter un bouton</button>`;
- if(tab==="layout")b=`<div class="box"><b>Page d’envoi</b><p><small>Ordre et largeur.</small></p>`+cfg.submitBlocks.map((x,i)=>`<div class="row"><span>${SL[x.id]}</span><span><select data-k="submitBlocks.${i}.w"><option value="half" ${x.w!=="full"?"selected":""}>Demi</option><option value="full" ${x.w==="full"?"selected":""}>Pleine</option></select> <button onclick="mv('submitBlocks',${i},-1)">↑</button> <button onclick="mv('submitBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>
- <div class="box"><b>Page de jeu</b><p><small>Ordre des éléments.</small></p>`+cfg.playBlocks.map((x,i)=>`<div class="row"><span>${PL[x]}</span><span><button onclick="mv('playBlocks',${i},-1)">↑</button> <button onclick="mv('playBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>`;
- 
- if(tab==="clips")b=`<div class="box">${clips.length?clips.map(c=>`
-    <div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-        <div><b>${esc(c.pseudo)}</b> · <b style="color:var(--p)">${esc(c.rank)}${c.div?" "+c.div:""}</b> · Discord : <b style="color:#5865f2">${esc(c.discord||"—")}</b></div>
-        <div style="display:flex;gap:8px;"><button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}')">Supprimer</button></div>
-      </div>
-      <div class="vid-box">
-        ${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}
-      </div>
-    </div>`).join(""):"<small>Aucun clip pour le moment.</small>"}</div>`;
+ <label>Icône du site<input type="file" accept="image/*" data-up="favicon">${cfg.favicon?`<img src="${esc(cfg.favicon)}" width="40"><button onclick="cfg.favicon='';draw()">Retirer</button>`:"<small>Aucune</small>"}</label></div></div>`;
 
- if(tab==="reports")b=`<div class="box">${reports.length?reports.map(r=>{
-    const c=clips.find(x=>x.id===r.clip);
-    return `<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-        <div>🚩 Signalement pour <b>${c?esc(c.pseudo):"Clip supprimé"}</b> (${new Date(r.date).toLocaleDateString()})</div>
-        <div style="display:flex;gap:8px;">
-          ${c?`<button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}');delReport('${esc(r.id)}')">Supprimer le clip</button>`:""}
-          <button class="pk" onclick="delReport('${esc(r.id)}')">Marquer traité</button>
-        </div>
-      </div>
-      ${c ? `<div class="vid-box">
-        ${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}
-      </div>` : "<small>Le clip a déjà été supprimé.</small>"}
-    </div>`;
-  }).join(""):"<small>Aucun signalement.</small>"}</div>`;
+ if(tab==="links") {
+   b=`<div class="box" style="padding:0; overflow:hidden;">
+   <div style="background:#1c0f19; padding:10px 16px; border-bottom:1px solid #2e1827; display:flex; justify-content:space-between; align-items:center;">
+     <b>✨ Aperçu en direct (Glisse et redimensionne)</b>
+     <button class="pk" onclick="addLink()">+ Ajouter un bouton</button>
+   </div>
+   <div class="preview-container">
+     <div style="text-align:center; color:#b99aab; font-size:11px; margin-bottom:10px; text-transform:uppercase; letter-spacing:2px;">Menu du haut (Nav)</div>
+     <div class="preview-nav" data-zone="top">
+       ${cfg.links.map((l,i)=>l.pos==="top"?renderRealBtn(l,i):"").join("")}
+     </div>
+     
+     <div style="text-align:center; color:#b99aab; font-size:11px; margin:30px 0 10px; text-transform:uppercase; letter-spacing:2px;">Pied de page (Bas)</div>
+     <div class="preview-zone" data-zone="bottom">
+       ${cfg.links.map((l,i)=>l.pos==="bottom"?renderRealBtn(l,i):"").join("")}
+     </div>
+   </div>
+   </div>
+   <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px;">`;
 
- if(tab==="bans")b=`<div class="box"><b>Liste des bannis</b>${bans.length?bans.map(x=>`
-    <div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:10px;">
-      <div><b>${esc(x.pseudo||"Inconnu")}</b> · IP: ${esc(x.ip||"—")} · UID: <small>${esc(x.uid||"—")}</small></div>
-      <button class="unban" onclick="unbanUser('${esc(x.id)}')">Unban</button>
-    </div>`).join(""):"<small>Aucun utilisateur banni.</small>"}</div>`;
+   b += cfg.links.map((l,i)=>`<div class="box" style="border-left:4px solid ${l.color}"><div class="row"><b>Édition : ${esc(l.label)}</b><span><button onclick="mv('links',${i},-1)">↑</button> <button onclick="mv('links',${i},1)">↓</button> <button class="del" onclick="delLink(${i})">Supprimer</button></span></div><div class="g2">
+   ${T(`links.${i}.label`,"Nom du bouton",l.label)}${T(`links.${i}.sub`,"Description",l.sub)}${T(`links.${i}.url`,"Lien (https://… ou mailto:…)",l.url)}
+   <label>Couleur<input type="color" data-k="links.${i}.color" value="${l.color}"></label>
+   <label>Emplacement<select data-k="links.${i}.pos"><option value="bottom" ${l.pos!=="top"?"selected":""}>En bas</option><option value="top" ${l.pos==="top"?"selected":""}>En haut</option></select></label>
+   <label>Logo prédéfini
+     <select onchange="cfg.links[${i}].iconImg=this.value; cfg.links[${i}].icon=''; draw()">
+       <option value="">-- Aucun --</option>
+       <option value="/logos/discord.png" ${l.iconImg==="/logos/discord.png"?"selected":""}>Discord</option>
+       <option value="/logos/paypal.png" ${l.iconImg==="/logos/paypal.png"?"selected":""}>PayPal</option>
+       <option value="/logos/tiktok.png" ${l.iconImg==="/logos/tiktok.png"?"selected":""}>TikTok</option>
+       <option value="/logos/gmail.png" ${l.iconImg==="/logos/gmail.png"?"selected":""}>Gmail</option>
+       <option value="/logos/tunelio.png" ${l.iconImg==="/logos/tunelio.png"?"selected":""}>Tunelio</option>
+       <option value="/logos/uwuanime.png" ${l.iconImg==="/logos/uwuanime.png"?"selected":""}>UwUanime</option>
+       <option value="/logos/medal.png" ${l.iconImg==="/logos/medal.png"?"selected":""}>Medal</option>
+       <option value="/logos/youtube.png" ${l.iconImg==="/logos/youtube.png"?"selected":""}>YouTube</option>
+     </select>
+   </label>
+   ${T(`links.${i}.icon`,"Ou Emoji",l.icon,'maxlength="4"')}
+   <label>Ou Image PC<input type="file" accept="image/*" data-up="links.${i}.iconImg"></label>
+   <label class="ck"><input type="checkbox" data-k="links.${i}.big" ${l.big?"checked":""}> Grand bouton (style vedette)</label>
+   <div></div>
+   <button onclick="cfg.links[${i}].w=0;cfg.links[${i}].h=0;draw()">Réinitialiser la taille</button>
+   </div></div>`).join("");
+   b += `</div>`;
+ }
+
+ if(tab==="layout")b=`<div class="box"><b>Page d’envoi</b>`+cfg.submitBlocks.map((x,i)=>`<div class="row"><span>${SL[x.id]}</span><span><select data-k="submitBlocks.${i}.w"><option value="half" ${x.w!=="full"?"selected":""}>Demi</option><option value="full" ${x.w==="full"?"selected":""}>Pleine</option></select> <button onclick="mv('submitBlocks',${i},-1)">↑</button> <button onclick="mv('submitBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>
+ <div class="box"><b>Page de jeu</b>`+cfg.playBlocks.map((x,i)=>`<div class="row"><span>${PL[x]}</span><span><button onclick="mv('playBlocks',${i},-1)">↑</button> <button onclick="mv('playBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>`;
+
+ if(tab==="clips")b=`<div class="box">${clips.length?clips.map(c=>`<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;"><div><b>${esc(c.pseudo)}</b> · <b style="color:var(--p)">${esc(c.rank)}${c.div?" "+c.div:""}</b> · Discord : <b style="color:#5865f2">${esc(c.discord||"—")}</b></div><div style="display:flex;gap:8px;"><button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}')">Supprimer</button></div></div><div class="vid-box">${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}</div></div>`).join(""):"<small>Aucun clip.</small>"}</div>`;
+
+ if(tab==="reports")b=`<div class="box">${reports.length?reports.map(r=>{const c=clips.find(x=>x.id===r.clip);return `<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;"><div>🚩 Signalement : <b>${c?esc(c.pseudo):"Supprimé"}</b></div><div style="display:flex;gap:8px;">${c?`<button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}');delReport('${esc(r.id)}')">Supprimer clip</button>`:""}<button class="pk" onclick="delReport('${esc(r.id)}')">Traité</button></div></div>${c ? `<div class="vid-box">${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}</div>` : ""}</div>`}).join(""):"<small>Aucun signalement.</small>"}</div>`;
+
+ if(tab==="bans")b=`<div class="box"><b>Liste des bannis</b>${bans.length?bans.map(x=>`<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:10px;"><div><b>${esc(x.pseudo||"Inconnu")}</b> · IP: ${esc(x.ip||"—")}</div><button class="unban" onclick="unbanUser('${esc(x.id)}')">Unban</button></div>`).join(""):"<small>Aucun banni.</small>"}</div>`;
  
- $("#app").innerHTML=`<div class="hd"><h1>Admin · ${esc(cfg.name)}</h1><div class="me">${ME.avatar?`<img src="${esc(ME.avatar)}" alt="">`:`<div class="av"></div>`}<span><b>${esc(ME.name)}</b><small>${ME.owner?"Owner":"Admin"} · ${esc(ME.id)}</small></span><button onclick="logout()">Déconnexion</button></div></div>
- <div class="tabs">
-   ${tabs.map(([k,l])=>`<button class="${tab===k?"on":""}" onclick="${k==='clips'?'loadClips()':k==='reports'?'loadReports()':k==='bans'?'loadBans()':`tab='${k}';draw()`}">${l}</button>`).join("")}
- </div>${b}<div class="bar"><button class="pk" onclick="save()">Enregistrer</button><button onclick="open('/','_blank')">Voir le site</button></div>`;
+ $("#app").innerHTML=`<div class="hd"><h1>Admin · ${esc(cfg.name)}</h1><div class="me">${ME.avatar?`<img src="${esc(ME.avatar)}" alt="">`:`<div class="av"></div>`}<span><b>${esc(ME.name)}</b><small>${ME.owner?"Owner":"Admin"}</small></span><button onclick="logout()">Déconnexion</button></div></div>
+ <div class="tabs">${tabs.map(([k,l])=>`<button class="${tab===k?"on":""}" onclick="${k==='clips'?'loadClips()':k==='reports'?'loadReports()':k==='bans'?'loadBans()':`tab='${k}';draw()`}">${l}</button>`).join("")}</div>${b}
+ <div class="bar"><button class="pk" onclick="save()" style="padding:12px 30px;font-size:16px;">💾 Enregistrer les modifications</button><button onclick="open('/','_blank')">Voir le site</button></div>`;
 }
+
 boot();
 
+// --- LOGIQUE DRAG AND DROP ET REDIMENSIONNEMENT ---
 let dragI=null;
-document.addEventListener("dragstart",e=>{const t=e.target.closest?.(".tile");if(!t)return;dragI=+t.dataset.i;t.classList.add("drag");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","x")});
-document.addEventListener("dragend",()=>{dragI=null;document.querySelectorAll(".drag,.over").forEach(x=>x.classList.remove("drag","over"))});
-document.addEventListener("dragover",e=>{const z=e.target.closest?.(".zone");if(z&&dragI!==null){e.preventDefault();document.querySelectorAll(".zone").forEach(x=>x.classList.toggle("over",x===z))}});
-document.addEventListener("drop",e=>{const z=e.target.closest?.(".zone");if(!z||dragI===null)return;e.preventDefault();
- const tiles=[...z.querySelectorAll(".tile:not(.drag)")];let before=null;
- for(const t of tiles){const r=t.getBoundingClientRect();if(e.clientY<r.bottom&&(e.clientY<r.top||e.clientX<r.left+r.width/2)){before=cfg.links[+t.dataset.i];break}}
- const [it]=cfg.links.splice(dragI,1);it.pos=z.dataset.zone;const bi=before?cfg.links.indexOf(before):-1;
- if(bi>=0)cfg.links.splice(bi,0,it);else cfg.links.push(it);dragI=null;draw()});
-document.addEventListener("pointerdown",e=>{const h=e.target.closest?.(".rz");if(!h)return;e.preventDefault();e.stopPropagation();
- const t=h.parentNode,l=cfg.links[+h.dataset.i],r=t.getBoundingClientRect(),x0=e.clientX,y0=e.clientY;t.draggable=false;h.setPointerCapture(e.pointerId);
- h.onpointermove=ev=>{l.w=Math.round(Math.min(460,Math.max(80,r.width+ev.clientX-x0)));l.h=Math.round(Math.min(200,Math.max(40,r.height+ev.clientY-y0)));t.style.width=l.w+"px";t.style.height=l.h+"px"};
- h.onpointerup=()=>{h.onpointermove=h.onpointerup=null;t.draggable=true}});
+
+document.addEventListener("dragstart",e=>{
+  const t=e.target.closest?.(".lk");
+  if(!t) return;
+  dragI=+t.dataset.i;
+  t.style.opacity="0.4";
+  e.dataTransfer.effectAllowed="move";
+  e.dataTransfer.setData("text/plain","x");
+});
+
+document.addEventListener("dragend",()=>{
+  dragI=null;
+  document.querySelectorAll(".lk").forEach(x=>x.style.opacity="1");
+  document.querySelectorAll(".preview-zone, .preview-nav").forEach(x=>x.classList.remove("over"));
+});
+
+document.addEventListener("dragover",e=>{
+  const z=e.target.closest?.(".preview-zone, .preview-nav");
+  if(z && dragI!==null){
+    e.preventDefault();
+    document.querySelectorAll(".preview-zone, .preview-nav").forEach(x=>x.classList.toggle("over",x===z));
+  }
+});
+
+document.addEventListener("drop",e=>{
+  const z=e.target.closest?.(".preview-zone, .preview-nav");
+  if(!z||dragI===null) return;
+  e.preventDefault();
+  
+  const tiles=[...z.querySelectorAll(".lk:not([style*='opacity: 0.4'])")];
+  let before=null;
+  for(const t of tiles){
+    const r=t.getBoundingClientRect();
+    if(e.clientY<r.bottom && (e.clientY<r.top || e.clientX<r.left+r.width/2)){
+      before=cfg.links[+t.dataset.i];
+      break;
+    }
+  }
+  
+  const [it]=cfg.links.splice(dragI,1);
+  it.pos=z.dataset.zone;
+  const bi=before?cfg.links.indexOf(before):-1;
+  if(bi>=0) cfg.links.splice(bi,0,it);
+  else cfg.links.push(it);
+  
+  dragI=null;
+  draw();
+});
+
+document.addEventListener("pointerdown",e=>{
+  const h=e.target.closest?.(".rz");
+  if(!h) return;
+  e.preventDefault(); e.stopPropagation();
+  
+  const t=h.parentNode;
+  const l=cfg.links[+h.dataset.i];
+  const r=t.getBoundingClientRect();
+  const x0=e.clientX, y0=e.clientY;
+  
+  t.draggable=false;
+  h.setPointerCapture(e.pointerId);
+  
+  h.onpointermove=ev=>{
+    l.w=Math.round(Math.min(460,Math.max(80,r.width+ev.clientX-x0)));
+    l.h=Math.round(Math.min(200,Math.max(40,r.height+ev.clientY-y0)));
+    t.style.width=l.w+"px";
+    t.style.minHeight=l.h+"px";
+  };
+  
+  h.onpointerup=()=>{
+    h.onpointermove=h.onpointerup=null;
+    t.draggable=true;
+  };
+});
 </script></body></html>
