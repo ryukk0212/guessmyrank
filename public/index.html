@@ -120,8 +120,8 @@ function submitView(){
  const flush=()=>{if(!run.length)return;out+=`<div class="cols"><div class="col">${run.filter((_,i)=>i%2===0).join("")}</div><div class="col">${run.filter((_,i)=>i%2===1).join("")}</div></div>`;run=[]};
  W.forEach((b,i)=>{if(b.w==="full"){flush();out+=items[i]}else run.push(items[i])});flush();
  
- // Modification ici : Ajout de la classe title-game et du centrage
- return `<div style="text-align:center;"><h1 class="title-game">Envoie ton clip à ${esc(S.name)}.</h1><p class="lead">Ajoute ta vidéo, ton pseudo et ton rank. À nous de deviner.</p></div><div class="grid">${out}</div>`;
+ // Le point a été retiré ici
+ return `<div style="text-align:center;"><h1 class="title-game">Envoie ton clip à ${esc(S.name)}</h1><p class="lead">Ajoute ta vidéo, ton pseudo et ton rank. À nous de deviner.</p></div><div class="grid">${out}</div>`;
 }
 function keep(){f.pseudo=$("#pseudo")?.value??f.pseudo;f.discord=$("#discord")?.value??f.discord;f.yt=$("#yt")?.value??f.yt;f.medal=$("#medal")?.value??f.medal;f.ok=$("#ok")?.checked??f.ok;render()}
 function bindSubmit(){const fi=$("#file");if(fi)fi.onchange=()=>{if(!fi.files[0])return;if(f.url)URL.revokeObjectURL(f.url);f.file=fi.files[0];f.url=URL.createObjectURL(f.file);keep()};$("#send").onclick=send}
@@ -150,7 +150,8 @@ async function send(){
 
 /* ---------- CLASSEMENT ---------- */
 function topView(){
- return `<div style="text-align:center;"><h1 class="title-game">Classement des devineurs.</h1><p class="lead">Les meilleurs enquêteurs de ${esc(S.name)}.</p></div>
+ // Le point a été retiré ici
+ return `<div style="text-align:center;"><h1 class="title-game">Classement des devineurs</h1><p class="lead">Les meilleurs enquêteurs de ${esc(S.name)}.</p></div>
  <div class="card" id="lb-container"><div class="empty">Chargement du classement...</div></div>`;
 }
 async function loadTopData(){
@@ -191,7 +192,8 @@ function playView(){
    <button class="go" id="val" style="margin-top:14px" ${pick?"":"disabled"} onclick="validate('${c.id}')">Valider mon RANK →</button></div>`:""
  };
  
- return `<div style="text-align:center;"><h1 class="title-game">À toi de trouver le vrai rank.</h1><p class="lead">Un clip. Ton instinct. La révélation.</p></div><div class="stack">${S.playBlocks.map(k=>B[k]?.()||"").join("")}</div>`;
+ // Le point a été retiré ici
+ return `<div style="text-align:center;"><h1 class="title-game">À toi de trouver le vrai rank</h1><p class="lead">Un clip. Ton instinct. La révélation.</p></div><div class="stack">${S.playBlocks.map(k=>B[k]?.()||"").join("")}</div>`;
 }
 
 function pickRank(r){pick=r;document.querySelectorAll("#pr .rk").forEach(e=>e.classList.toggle("on",e.dataset.r===r));$("#val").disabled=false}
