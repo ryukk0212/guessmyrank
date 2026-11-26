@@ -17,7 +17,8 @@ a,button,.opt,.rk,.tabs span,input[type=checkbox]{cursor:url('/cursor-pointer.pn
 .btn.pink,.go{background:linear-gradient(135deg,var(--p),var(--p2));color:#1d0610;border:0;box-shadow:0 8px 30px color-mix(in srgb,var(--p) 35%,transparent)}
 .btn:disabled,.go:disabled{opacity:.45;cursor:not-allowed}
 h1{font:800 clamp(30px,6vw,48px) Syne;margin:6px 0 8px;letter-spacing:-1px}
-.title-game{font-family:'Bebas Neue',sans-serif;font-size:clamp(45px,9vw,75px);letter-spacing:2px;color:var(--tx);text-shadow:0 0 15px color-mix(in srgb,var(--p) 60%,transparent);margin:10px 0 5px;text-transform:uppercase;}
+/* Police stylée pour les grands titres */
+.title-game{font-family:'Bebas Neue',sans-serif;font-size:clamp(45px,9vw,75px);letter-spacing:2px;color:var(--tx);text-shadow:0 0 15px color-mix(in srgb,var(--p) 60%,transparent);margin:10px 0 5px;text-transform:uppercase;line-height:1.1;}
 .lead{color:var(--mut);margin:0 0 26px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.vprev{margin-top:4px}.vprev video,.vprev iframe{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:14px;background:#000;max-height:460px}.vprev iframe{margin-top:12px}.chg{display:block;text-align:center;font-size:13px;color:var(--mut);margin-top:10px;}.chg u{color:var(--p)}.full{grid-column:1/-1}.cols{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.col{display:flex;flex-direction:column;gap:20px}@media(max-width:820px){.cols{display:flex;flex-direction:column}.col{display:contents}}@media(max-width:820px){.grid{grid-template-columns:1fr}}
 .card{background:color-mix(in srgb,var(--card) 90%,transparent);border:1px solid var(--line);border-radius:22px;padding:24px;margin-bottom:0}.stack>.card,.stack>.bar{margin-bottom:16px}
@@ -118,7 +119,9 @@ function submitView(){
  W=S.submitBlocks.filter(b=>BL[b.id]);let out="",run=[];
  const flush=()=>{if(!run.length)return;out+=`<div class="cols"><div class="col">${run.filter((_,i)=>i%2===0).join("")}</div><div class="col">${run.filter((_,i)=>i%2===1).join("")}</div></div>`;run=[]};
  W.forEach((b,i)=>{if(b.w==="full"){flush();out+=items[i]}else run.push(items[i])});flush();
- return `<h1>Envoie ton clip à ${esc(S.name)}.</h1><p class="lead">Ajoute ta vidéo, ton pseudo et ton rank. À nous de deviner.</p><div class="grid">${out}</div>`;
+ 
+ // Modification ici : Ajout de la classe title-game et du centrage
+ return `<div style="text-align:center;"><h1 class="title-game">Envoie ton clip à ${esc(S.name)}.</h1><p class="lead">Ajoute ta vidéo, ton pseudo et ton rank. À nous de deviner.</p></div><div class="grid">${out}</div>`;
 }
 function keep(){f.pseudo=$("#pseudo")?.value??f.pseudo;f.discord=$("#discord")?.value??f.discord;f.yt=$("#yt")?.value??f.yt;f.medal=$("#medal")?.value??f.medal;f.ok=$("#ok")?.checked??f.ok;render()}
 function bindSubmit(){const fi=$("#file");if(fi)fi.onchange=()=>{if(!fi.files[0])return;if(f.url)URL.revokeObjectURL(f.url);f.file=fi.files[0];f.url=URL.createObjectURL(f.file);keep()};$("#send").onclick=send}
@@ -140,14 +143,14 @@ async function send(){
   const r=await fetch("/api/clips",{method:"POST",body:fd});
   if(!r.ok)throw new Error((await r.json()).error||r.status);
   f={tab:"up",platform:"",rank:"",div:"",file:null,err:""};
-  $("#app").innerHTML=nav()+`<div class="card empty"><h1>Clip envoyé ✓</h1><p>Merci ! La communauté peut maintenant deviner ton rank.</p><button class="btn pink" onclick="location.hash='play'">Jouer avec la communauté →</button></div>`+foot();
+  $("#app").innerHTML=nav()+`<div class="card empty"><h1 class="title-game">Clip envoyé ✓</h1><p>Merci ! La communauté peut maintenant deviner ton rank.</p><button class="btn pink" onclick="location.hash='play'">Jouer avec la communauté →</button></div>`+foot();
   fetch("/api/clips?uid="+encodeURIComponent(uid)).then(r=>r.json()).then(d=>clips=d);
  }catch(x){e("Erreur d’envoi : "+(x.message||"réessaie"));$("#send").disabled=false;$("#send").textContent="Envoyer mon clip ›"}
 }
 
 /* ---------- CLASSEMENT ---------- */
 function topView(){
- return `<h1>Classement des devineurs.</h1><p class="lead">Les meilleurs enquêteurs de ${esc(S.name)}.</p>
+ return `<div style="text-align:center;"><h1 class="title-game">Classement des devineurs.</h1><p class="lead">Les meilleurs enquêteurs de ${esc(S.name)}.</p></div>
  <div class="card" id="lb-container"><div class="empty">Chargement du classement...</div></div>`;
 }
 async function loadTopData(){
@@ -182,7 +185,7 @@ function playView(){
    </div></div>`:"",
    
   video:()=>c?`<div class="card">${c.yt?`<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:c.medal?`<iframe src="https://medal.tv/clip/${medalId(c.medal)}/embed" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:`<video src="${esc(c.url)}" controls playsinline></video>`}</div>`
-   :`<div class="card empty"><h1>Tout est joué !</h1><p>Tu as deviné tous les clips disponibles pour le moment. Reviens plus tard !</p><br><button class="btn pink" onclick="location.hash='submit'">Envoyer un clip</button></div>`,
+   :`<div class="card empty"><h1 class="title-game">Tout est joué !</h1><p>Tu as deviné tous les clips disponibles pour le moment. Reviens plus tard !</p><br><button class="btn pink" onclick="location.hash='submit'">Envoyer un clip</button></div>`,
    
   ranks:()=>c?`<div class="card"><div class="ranks nine" id="pr">${R.map(([r,col])=>`<div class="rk ${pick===r?"on":""}" data-r="${r}" style="--c:${col}" onclick="pickRank('${r}')">${gem(r)}${r}</div>`).join("")}</div>
    <button class="go" id="val" style="margin-top:14px" ${pick?"":"disabled"} onclick="validate('${c.id}')">Valider mon RANK →</button></div>`:""
@@ -246,7 +249,7 @@ function modalDefi(d,ok){
  };
 }
 function endDefi(){
- $("#app").innerHTML=nav()+`<div class="card empty"><h1>Défi terminé !</h1><p style="font-size:24px;margin:20px 0;">Score : <b style="color:var(--p)">${defiScore} / ${defiClips.length}</b></p>
+ $("#app").innerHTML=nav()+`<div class="card empty"><h1 class="title-game">Défi terminé !</h1><p style="font-size:24px;margin:20px 0;">Score : <b style="color:var(--p)">${defiScore} / ${defiClips.length}</b></p>
  <div style="display:flex;gap:10px;justify-content:center;"><button class="btn pink" onclick="startDefi()">Recommencer</button> <button class="btn" onclick="stopDefi()">Quitter</button></div></div>`+foot();
  defiMode=false;
 }
