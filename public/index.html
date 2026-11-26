@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>Guess My Rank</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" id="fav" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@800&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b060b;--card:#150b13;--line:#2e1827;--tx:#fbeff5;--mut:#b99aab;--p:#ff4d8d;--p2:color-mix(in srgb,var(--p) 55%,white);box-sizing:border-box}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:radial-gradient(ellipse at 15% 0,color-mix(in srgb,var(--p) 20%,transparent) 0,transparent 45%),radial-gradient(ellipse at 90% 60%,color-mix(in srgb,var(--p) 14%,transparent) 0,transparent 45%),var(--bg);color:var(--tx);font:400 14px Manrope,system-ui,sans-serif;min-height:100vh;cursor:url('/cursor-normal.png'),auto;}
+a,button,.opt,.rk,.tabs span,input[type=checkbox]{cursor:url('/cursor-pointer.png'),pointer;}
+#bgimg,#dim{position:fixed;inset:-60px;background-size:cover;background-position:center;z-index:0;pointer-events:none}#dim{inset:0;background:var(--bg);opacity:0}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:auto;padding:max(28px,env(safe-area-inset-top)) 18px 60px}
+.logo{font:800 44px Syne,sans-serif;color:var(--p);text-align:center;letter-spacing:-1px}
+.sub{text-align:center;font-size:11px;letter-spacing:.35em;color:var(--p);margin-top:6px}
+.nav{display:flex;gap:10px;justify-content:center;margin:22px 0 34px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:color-mix(in srgb,var(--card) 88%,transparent);color:var(--tx);padding:12px 20px;border-radius:14px;font:800 14px Manrope;}
+.btn.pink,.go{background:linear-gradient(135deg,var(--p),var(--p2));color:#1d0610;border:0;box-shadow:0 8px 30px color-mix(in srgb,var(--p) 35%,transparent)}
+.btn:disabled,.go:disabled{opacity:.45;cursor:not-allowed}
+h1{font:800 clamp(30px,6vw,48px) Syne;margin:6px 0 8px;letter-spacing:-1px}
+/* Nouvelle classe pour le titre du jeu */
+.title-game{font-family:'Bebas Neue',sans-serif;font-size:clamp(45px,9vw,75px);letter-spacing:2px;color:var(--tx);text-shadow:0 0 15px color-mix(in srgb,var(--p) 60%,transparent);margin:10px 0 5px;text-transform:uppercase;}
+.lead{color:var(--mut);margin:0 0 26px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.vprev{margin-top:4px}.vprev video,.vprev iframe{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:14px;background:#000;max-height:460px}.vprev iframe{margin-top:12px}.chg{display:block;text-align:center;font-size:13px;color:var(--mut);margin-top:10px;}.chg u{color:var(--p)}.full{grid-column:1/-1}.cols{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.col{display:flex;flex-direction:column;gap:20px}@media(max-width:820px){.cols{display:flex;flex-direction:column}.col{display:contents}}@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:color-mix(in srgb,var(--card) 90%,transparent);border:1px solid var(--line);border-radius:22px;padding:24px;margin-bottom:0}.stack>.card,.stack>.bar{margin-bottom:16px}
+.step{display:flex;gap:12px;align-items:center;margin-bottom:14px}.step b{min-width:36px;height:36px;border:1px solid var(--p);color:var(--p2);border-radius:50%;display:grid;place-items:center;font-size:13px}.step h3{margin:0;font-size:17px}.step small{color:var(--mut)}
+.tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin:14px 0}.tabs span{padding:8px 0;color:var(--mut)}.tabs .on{color:var(--p2);border-bottom:2px solid var(--p)}
+.drop{border:1.5px dashed var(--line);border-radius:16px;height:190px;display:grid;place-items:center;text-align:center;color:var(--mut)}.drop b{color:var(--tx);font-size:16px}
+input[type=text]{width:100%;background:#0e070d;border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:14px;font:inherit}input:focus{outline:1px solid var(--p)}
+label.f{display:block;font-weight:600;font-size:12px;margin:12px 0 6px}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{border:1px solid var(--line);background:#0e070d;border-radius:14px;padding:18px;display:flex;gap:10px;align-items:center}.opt i{width:18px;height:18px;border-radius:50%;border:2px solid #6b4a5d}.opt.on{border-color:var(--p);background:color-mix(in srgb,var(--p) 14%,#0e070d)}.opt.on i{background:var(--p);border-color:var(--p)}
+.ranks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.ranks.nine{grid-template-columns:repeat(9,1fr)}@media(max-width:700px){.ranks.nine{grid-template-columns:repeat(3,1fr)}}
+.rk{background:#0e070d;border:1px solid var(--line);border-radius:14px;padding:14px 6px;text-align:center;font-weight:700;font-size:12px}.rk:hover{border-color:#5b2c48}.rk.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 22%,#150b13);box-shadow:0 0 0 1px var(--c) inset}
+.gem img{width:100%;height:100%;object-fit:contain;display:block}.gem.img{background:none;clip-path:none}
+.gem{width:38px;height:42px;margin:0 auto 8px;background:linear-gradient(145deg,#fff8,var(--c) 45%,#0006);clip-path:polygon(50% 0,100% 28%,100% 72%,50% 100%,0 72%,0 28%)}
+.divs{display:flex;gap:8px;margin-top:10px}.divs .opt{padding:10px 16px}
+.chk{display:flex;gap:10px;font-size:11px;color:var(--mut);margin:0 0 16px;align-items:flex-start}
+.go{width:100%;padding:15px;border-radius:14px;font:800 15px Manrope;}
+.note{font-size:11px;color:var(--mut);margin-top:10px}.err{color:#ff6b8b;font-size:12px;margin-top:8px}
+video,iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background:#000;display:block}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;margin-left:8px;color:var(--mut)}
+.modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;padding:16px;z-index:9}
+.mb{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;width:min(480px,100%);max-height:92vh;overflow:auto}
+.res{text-align:center;font:800 28px Syne;margin:0 0 16px}.res.ok{color:#2fcf86}.res.ko{color:var(--p)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cmp>div{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;background:#0e070d}.cmp small{font-size:10px;letter-spacing:.15em;color:var(--mut)}.cmp .g{border-color:#2fcf86;background:#0d2a1e}.cmp b{display:block;font-size:20px}
+.acc{margin:14px 0;border:1px solid var(--line);border-radius:14px;padding:14px;background:#0e070d;display:flex;justify-content:space-between;font-weight:700}
+.vr{margin:10px 0}.vr div:first-child{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}.vr .t{height:7px;background:#2a1a24;border-radius:9px;overflow:hidden}.vr .t i{display:block;height:100%;background:linear-gradient(90deg,var(--c),var(--p2));border-radius:9px}
+.empty{text-align:center;padding:50px 10px;color:var(--mut)}
+.lk{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:16px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 90%,transparent);color:var(--tx);text-decoration:none;font-weight:800;width:100%}
+.lk i{width:42px;height:42px;border-radius:12px;background:color-mix(in srgb,var(--lc) 30%,#150b13);display:grid;place-items:center;font-size:20px;font-style:normal;overflow:hidden;flex:none}.lk i img{width:100%;height:100%;object-fit:cover}
+.lk span{flex:1}.lk small{display:block;font-weight:400;color:var(--mut);font-size:12px}.lk em{font-style:normal;opacity:.7}
+.lk.big{background:linear-gradient(135deg,var(--lc),color-mix(in srgb,var(--lc) 55%,white));color:#1d0610;border:0;box-shadow:0 8px 30px color-mix(in srgb,var(--lc) 35%,transparent)}.lk.big i{background:#fff4}.lk.big small{color:#1d0610cc}
+.lk.sm{width:auto;padding:8px 16px 8px 8px;border-radius:14px}.lk.sm i{width:30px;height:30px;font-size:15px;border-radius:9px}
+.foot{max-width:940px;margin:50px auto 0;display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:12px}.foot .copy{width:100%}.copy{text-align:center;font-size:10px;letter-spacing:.25em;color:var(--p);margin-top:18px}
+.lb-row{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line);align-items:center}.lb-row:last-child{border:0}
+.badge{background:var(--p);color:#1d0610;padding:2px 8px;border-radius:8px;font-weight:800;font-size:12px;margin-left:8px}
+</style></head><body><div id="bgimg"></div><div id="dim"></div><div class="wrap" id="app"></div>
+<script>
+const R=[["Fer","#8a8f98"],["Bronze","#a9743b"],["Argent","#c5ccd6"],["Or","#f0b43c"],["Platine","#3fb5c9"],["Diamant","#b67cf2"],["Ascendant","#2fcf86"],["Immortel","#e0476b"],["Radiant","#f6e3a1"]];
+const C=n=>R.find(r=>r[0]===n)[1];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let uid=ls("om_uid",null);if(!uid){uid="u"+Math.random().toString(36).slice(2,12);sv("om_uid",uid)}
+let myPseudo=ls("om_pseudo","");
+let S={name:"onlymy",tagline:"GUESS MY RANK · VALORANT",accent:"#ff4d8d",bg:"#0b060b",bgImage:"",blur:18,dim:.6,favicon:"",
+ submitBlocks:[{id:"clip",w:"half"},{id:"rank",w:"half"},{id:"identity",w:"half"},{id:"platform",w:"half"},{id:"send",w:"full"}],playBlocks:["filters","info","video","ranks"],links:[]};
+let clips=[],played=ls("om_played",{}),f={tab:"up",platform:"",rank:"",div:"",file:null,err:""},cur=0,filter="all",pick="";
+let streak=ls("om_streak",0), defiMode=false, defiCur=0, defiScore=0, defiClips=[];
+const ytId=u=>{const m=String(u).match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/);return m?m[1]:null};
+const gem=n=>`<div class="gem" style="--c:${C(n)}"><img src="ranks/${n.toLowerCase()}.png" alt="" onload="this.parentNode.classList.add('img')" onerror="this.remove()"></div>`;
+const view=()=>location.hash==="#play"?"play":location.hash==="#top"?"top":"submit";
+const safe=u=>/^(https?:\/\/|mailto:)/i.test(u||"")?esc(u):"#";
+
+function apply(){
+ const r=document.documentElement.style;r.setProperty("--p",S.accent);r.setProperty("--bg",S.bg);
+ document.title=S.name+" · Guess My Rank";if(S.favicon)$("#fav").href=S.favicon;
+ const b=$("#bgimg");b.style.backgroundImage=S.bgImage?`url("${S.bgImage}")`:"none";b.style.filter=`blur(${S.blur}px)`;$("#dim").style.opacity=S.bgImage?S.dim:0;
+}
+function lsz(l){const w=l.w>0?l.w:(l.big?420:210);return `width:min(100%,${w}px);`+(l.h>0?`min-height:${l.h}px;`:"")}
+function lk(l,sm){
+ const ic=l.iconImg?`<img src="${esc(l.iconImg)}" alt="">`:esc(l.icon||"🔗");
+ return `<a class="lk ${sm?"sm":l.big?"big":""}" style="--lc:${esc(l.color)};${sm&&!(l.w>0)?"":lsz(l)}" href="${safe(l.url)}" target="_blank" rel="noopener"><i>${ic}</i><span>${esc(l.label)}${!sm&&l.sub?`<small>${esc(l.sub)}</small>`:""}</span>${sm?"":"<em>↗</em>"}</a>`;
+}
+function nav(){
+ return `<div class="logo">${esc(S.name)}</div><div class="sub">${esc(S.tagline)}</div>
+ <div class="nav"><button class="btn ${view()==="submit"?"pink":""}" onclick="location.hash='submit'">Envoyer mon clip</button>
+ <button class="btn ${view()==="play"?"pink":""}" onclick="location.hash='play'">Jouer</button>
+ <button class="btn ${view()==="top"?"pink":""}" onclick="location.hash='top'">🏆 Classement</button>
+ ${S.links.filter(l=>l.pos==="top").map(l=>lk(l,1)).join("")}</div>`;
+}
+function foot(){return `<div class="foot">${S.links.filter(l=>l.pos==="bottom").map(l=>lk(l)).join("")}<div class="copy">— © ${new Date().getFullYear()} ${esc(S.name)} —</div></div>`}
+
+function render(){
+  $("#app").innerHTML=nav()+(view()==="play"?playView():view()==="top"?topView():submitView())+foot();
+  if(view()==="submit")bindSubmit();
+  if(view()==="top")loadTopData();
+}
+
+/* ---------- ENVOI ---------- */
+const hd=(n,t,s)=>`<div class="step">${n?`<b>${n}</b>`:""}<div><h3>${t}</h3>${s?`<small>${s}</small>`:""}</div></div>`;
+const BL={
+ clip:n=>hd(n,"Le clip qui va me faire hésiter.","Entre 15 et 90 secondes, avec le son du jeu activé.")+`<div class="tabs"><span class="${f.tab==="up"?"on":""}" onclick="f.tab='up';keep()">⬆ Importer ma vidéo</span><span class="${f.tab==="yt"?"on":""}" onclick="f.tab='yt';keep()">Lien YouTube</span></div>
+ ${f.tab==="up"?(f.file&&f.url?`<div class="vprev"><video src="${f.url}" controls playsinline preload="metadata"></video><label class="chg"><input type="file" id="file" accept="video/*" hidden>${esc(f.file.name)} · ${(f.file.size/1048576).toFixed(1)} Mo · <u>changer de vidéo</u></label></div>`:`<label class="drop"><input type="file" id="file" accept="video/*" hidden><div>⬆<br><b>Glisse ta vidéo ici</b><br>ou clique pour choisir un fichier<br><small>MP4, WebM ou MOV · taille libre</small></div></label>`):`<input type="text" id="yt" placeholder="https://youtube.com/watch?v=..." value="${esc(f.yt||"")}" onchange="keep()">${ytId(f.yt||"")?`<div class="vprev"><iframe src="https://www.youtube-nocookie.com/embed/${ytId(f.yt)}" allowfullscreen></iframe></div>`:""}`}
+ <p class="note">🛡 Ne montre pas ton RANK : ni dans le titre, ni dans ton pseudo, ni à l’écran.</p>`,
+ identity:n=>hd(n,"Qui se cache derrière le clip ?","Pour afficher ton nom et te joindre si ton clip est choisi.")+`<div class="two"><div><label class="f">Pseudo à afficher</label><input type="text" id="pseudo" placeholder="Ton pseudo" value="${esc(f.pseudo||"")}"></div><div><label class="f">Pseudo Discord</label><input type="text" id="discord" placeholder="ex. monpseudo" value="${esc(f.discord||"")}"></div></div>`,
+ platform:n=>hd(n,"Sur quelle plateforme joues-tu ?","Indique sur quel support tu as enregistré ce clip.")+`<div class="two"><div class="opt ${f.platform==="PC"?"on":""}" onclick="f.platform='PC';keep()"><i></i>PC</div><div class="opt ${f.platform==="Console"?"on":""}" onclick="f.platform='Console';keep()"><i></i>Console</div></div>`,
+ rank:n=>hd(n,"Ton RANK. À eux de deviner.","Ton rank au moment où le clip a été enregistré.")+`<div class="ranks">${R.map(([r,c])=>`<div class="rk ${f.rank===r?"on":""}" style="--c:${c}" onclick="f.rank='${r}';f.div='';keep()">${gem(r)}${r}</div>`).join("")}</div>
+ ${f.rank&&f.rank!=="Radiant"?`<div class="divs">${[1,2,3].map(d=>`<div class="opt ${f.div==d?"on":""}" onclick="f.div=${d};keep()"><i></i>${d}</div>`).join("")}</div>`:""}
+ ${f.rank?`<p class="note">✔ ${esc(f.rank)}${f.div?" "+f.div:""}</p>`:""}`,
+ send:()=>`<label class="chk"><input type="checkbox" id="ok" ${f.ok?"checked":""}> Ce clip est le mien. J’autorise sa publication sur ce site avec mon pseudo et la révélation de mon RANK après le vote.</label><button class="go" id="send">Envoyer mon clip ›</button><div class="err" id="err">${esc(f.err)}</div>`
+};
+function submitView(){
+ let n=0,o=0;const items=S.submitBlocks.filter(b=>BL[b.id]).map(b=>`<div class="card ${b.w==="full"?"full":""}" style="order:${o++}">${BL[b.id](b.id==="send"?"":String(++n).padStart(2,"0"))}</div>`.replace(/^/,"")),
+ W=S.submitBlocks.filter(b=>BL[b.id]);let out="",run=[];
+ const flush=()=>{if(!run.length)return;out+=`<div class="cols"><div class="col">${run.filter((_,i)=>i%2===0).join("")}</div><div class="col">${run.filter((_,i)=>i%2===1).join("")}</div></div>`;run=[]};
+ W.forEach((b,i)=>{if(b.w==="full"){flush();out+=items[i]}else run.push(items[i])});flush();
+ return `<h1>Envoie ton clip à ${esc(S.name)}.</h1><p class="lead">Ajoute ta vidéo, ton pseudo et ton rank. À nous de deviner.</p><div class="grid">${out}</div>`;
+}
+function keep(){f.pseudo=$("#pseudo")?.value??f.pseudo;f.discord=$("#discord")?.value??f.discord;f.yt=$("#yt")?.value??f.yt;f.ok=$("#ok")?.checked??f.ok;render()}
+function bindSubmit(){const fi=$("#file");if(fi)fi.onchange=()=>{if(!fi.files[0])return;if(f.url)URL.revokeObjectURL(f.url);f.file=fi.files[0];f.url=URL.createObjectURL(f.file);keep()};$("#send").onclick=send}
+async function send(){
+ f.pseudo=$("#pseudo").value.trim();f.discord=$("#discord").value.trim();f.yt=$("#yt")?.value.trim()??f.yt;f.ok=$("#ok").checked;
+ const e=m=>{f.err=m;$("#err").textContent=m};
+ if(f.tab==="yt"&&!ytId(f.yt||""))return e("Colle un lien YouTube valide.");
+ if(f.tab==="up"&&!f.file)return e("Ajoute une vidéo.");
+ if(!f.pseudo)return e("Ajoute un pseudo à afficher.");
+ if(!f.platform)return e("Choisis PC ou Console.");
+ if(!f.rank||(f.rank!=="Radiant"&&!f.div))return e("Sélectionne ton rank et ta division.");
+ if(!f.ok)return e("Coche la case d’autorisation.");
+ $("#send").disabled=true;$("#send").textContent="Envoi…";
+ try{
+  const fd=new FormData();
+  ["pseudo","discord","platform","rank"].forEach(k=>fd.append(k,f[k]||""));fd.append("div",f.rank==="Radiant"?0:f.div);fd.append("uid",uid);
+  if(f.tab==="yt")fd.append("yt",ytId(f.yt));else fd.append("video",f.file);
+  const r=await fetch("/api/clips",{method:"POST",body:fd});
+  if(!r.ok)throw new Error((await r.json()).error||r.status);
+  f={tab:"up",platform:"",rank:"",div:"",file:null,err:""};
+  $("#app").innerHTML=nav()+`<div class="card empty"><h1>Clip envoyé ✓</h1><p>Merci ! La communauté peut maintenant deviner ton rank.</p><button class="btn pink" onclick="location.hash='play'">Jouer avec la communauté →</button></div>`+foot();
+  fetch("/api/clips?uid="+encodeURIComponent(uid)).then(r=>r.json()).then(d=>clips=d);
+ }catch(x){e("Erreur d’envoi : "+(x.message||"réessaie"));$("#send").disabled=false;$("#send").textContent="Envoyer mon clip ›"}
+}
+
+/* ---------- CLASSEMENT ---------- */
+function topView(){
+ return `<h1>Classement des devineurs.</h1><p class="lead">Les meilleurs enquêteurs de ${esc(S.name)}.</p>
+ <div class="card" id="lb-container"><div class="empty">Chargement du classement...</div></div>`;
+}
+async function loadTopData(){
+ try {
+  const data=await (await fetch("/api/leaderboard")).json();
+  const rows=data.map((u,i)=>`<div class="lb-row"><div><b>#${i+1}</b> ${esc(u.pseudo)}</div><div><b>${u.correct}</b> / ${u.total} <small style="color:var(--mut)">(${Math.round(u.correct/u.total*100)}%)</small></div></div>`).join("");
+  $("#lb-container").innerHTML = rows || "<div class='empty'>Aucun vote pour le moment. Sois le premier !</div>";
+ } catch(e) {
+  $("#lb-container").innerHTML = "<div class='empty'>Erreur de chargement.</div>";
+ }
+}
+
+/* ---------- JOUER & DEFI (CENTRÉ) ---------- */
+function playView(){
+ let c = null;
+ if (defiMode) {
+    c = defiClips[defiCur];
+ } else {
+    const unplayed = clips.filter(x => (filter==="all" || x.platform===filter) && !played[x.id]).sort((a,b)=>a.created-b.created);
+    if (unplayed.length > 0) {
+       c = unplayed[cur % unplayed.length];
+    }
+ }
+
+ const B={
+  filters:()=>`<div class="bar"><div>${["all","PC","Console"].map(x=>`<button class="btn ${filter===x?"pink":""}" onclick="filter='${x}';cur=0;pick='';render()">${x==="all"?"Tous":x}</button>`).join(" ")}
+  ${defiMode?`<button class="btn pink" onclick="stopDefi()">Quitter le défi</button>`:`<button class="btn" onclick="startDefi()">🎯 Mode Défi (10 clips)</button>`}</div>
+  <div class="pill">Série actuelle : 🔥 ${streak} ${streak>2?'<span class="badge">En feu !</span>':''} &nbsp;|&nbsp; Déjà joués · ${Object.keys(played).length}</div></div>`,
+  
+  info:()=>c?`<div class="bar"><div><b style="font-size:17px">${esc(c.pseudo)}</b><span class="pill">${esc(c.platform)}</span>${played[c.id]?`<span class="pill">déjà joué</span>`:""}</div>
+   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+     ${!defiMode?`
+     <button class="btn" style="padding:8px 12px; color:#ff6b8b;" onclick="reportClip('${c.id}')">🚩 Signaler le clip</button>
+     <button class="btn" onclick="cur++;pick='';render()">Suivant →</button>`:`<b>Défi : ${defiCur+1}/${defiClips.length}</b>`}
+   </div></div>`:"",
+   
+  video:()=>c?`<div class="card">${c.yt?`<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:`<video src="${esc(c.url)}" controls playsinline></video>`}</div>`
+   :`<div class="card empty"><h1>Tout est joué !</h1><p>Tu as deviné tous les clips disponibles pour le moment. Reviens plus tard !</p><br><button class="btn pink" onclick="location.hash='submit'">Envoyer un clip</button></div>`,
+   
+  ranks:()=>c?`<div class="card"><div class="ranks nine" id="pr">${R.map(([r,col])=>`<div class="rk ${pick===r?"on":""}" data-r="${r}" style="--c:${col}" onclick="pickRank('${r}')">${gem(r)}${r}</div>`).join("")}</div>
+   <button class="go" id="val" style="margin-top:14px" ${pick?"":"disabled"} onclick="validate('${c.id}')">Valider mon RANK →</button></div>`:""
+ };
+ 
+ // C'EST ICI QUE J'AI AJOUTÉ LE CENTRAGE
+ return `<div style="text-align:center;"><h1 class="title-game">À toi de trouver le vrai rank</h1><p class="lead">Un clip. Ton instinct. La révélation.</p></div><div class="stack">${S.playBlocks.map(k=>B[k]?.()||"").join("")}</div>`;
+}
+
+function pickRank(r){pick=r;document.querySelectorAll("#pr .rk").forEach(e=>e.classList.toggle("on",e.dataset.r===r));$("#val").disabled=false}
+
+function startDefi(){
+ if(!myPseudo){ myPseudo=prompt("Choisis un pseudo pour le classement :"); if(!myPseudo)return; sv("om_pseudo",myPseudo); }
+ let pool = clips.filter(c => (filter==="all" || c.platform===filter) && !played[c.id]);
+ pool.sort(() => Math.random() - 0.5);
+ defiClips = pool.slice(0, 10);
+ if (defiClips.length === 0) return alert("Tu as déjà joué à tous les clips disponibles !");
+ defiMode=true; defiCur=0; defiScore=0; pick=""; render();
+}
+function stopDefi(){ defiMode=false; render(); }
+
+async function reportClip(id){
+ if(!confirm("Veux-tu vraiment signaler ce clip à l'administrateur ?")) return;
+ try {
+   await fetch("/api/clips/"+id+"/report",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reason:"Signalement utilisateur"})});
+   alert("Clip signalé avec succès ! L'administrateur va vérifier.");
+ } catch(e) {
+   alert("Erreur lors du signalement.");
+ }
+}
+
+async function validate(id){
+ if (played[id]) return alert("Tu as déjà voté pour ce clip ! Ta série n'a pas été augmentée.");
+ const c=clips.find(x=>x.id===id);if(!c)return;
+ if(!myPseudo){ myPseudo=prompt("Quel pseudo pour le classement ?")||"Anonyme"; sv("om_pseudo",myPseudo); }
+ 
+ const r=await fetch("/api/clips/"+id+"/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid,pseudo:myPseudo,rank:pick})});
+ if(!r.ok)return alert("Erreur, réessaie.");
+ const d=await r.json();played[id]=d.mine;sv("om_played",played);
+ const ok=d.mine===d.rank;
+ 
+ if(ok){streak++; defiScore++;} else streak=0;
+ sv("om_streak",streak);
+ 
+ if(defiMode){
+   modalDefi(d,ok);
+ } else {
+   modal(d,ok, id);
+ }
+}
+function modalDefi(d,ok){
+ const m=document.createElement("div");m.className="modal";
+ m.innerHTML=`<div class="mb"><div style="text-align:right;cursor:pointer" id="x">✕</div><div class="res ${ok?"ok":"ko"}">${ok?"BIEN JOUÉ !":"RATÉ !"}</div>
+ <p style="text-align:center;font-size:18px;font-weight:800;">${ok?"✔":"✖"} ${d.rank} ${d.div||""}</p>
+ <button class="go" id="nx" style="margin-top:14px">${defiCur<defiClips.length-1?"Clip suivant ("+(defiCur+2)+"/"+defiClips.length+") →":"Voir mon score final 🏆"}</button></div>`;
+ document.body.appendChild(m);
+ m.querySelector("#x").onclick=()=>{m.remove();stopDefi()};
+ m.querySelector("#nx").onclick=()=>{
+   m.remove();
+   if(defiCur<defiClips.length-1){ defiCur++; pick=""; render(); }
+   else { endDefi(); }
+ };
+}
+function endDefi(){
+ $("#app").innerHTML=nav()+`<div class="card empty"><h1>Défi terminé !</h1><p style="font-size:24px;margin:20px 0;">Score : <b style="color:var(--p)">${defiScore} / ${defiClips.length}</b></p>
+ <div style="display:flex;gap:10px;justify-content:center;"><button class="btn pink" onclick="startDefi()">Recommencer</button> <button class="btn" onclick="stopDefi()">Quitter</button></div></div>`+foot();
+ defiMode=false;
+}
+function modal(d,ok,clipId){
+ const my=d.mine,t=d.tally,tot=Object.values(t).reduce((a,b)=>a+b,0);
+ const rows=R.map(([r,col])=>{const k=t[r]||0,p=tot?Math.round(k/tot*100):0;return `<div class="vr" style="--c:${col}"><div><span>${r}${r===my?` <small style="color:var(--p2)">TON CHOIX</small>`:""}</span><b>${p} % <small style="color:var(--mut)">(${k})</small></b></div><div class="t"><i style="width:${p}%"></i></div></div>`}).join("");
+ const m=document.createElement("div");m.className="modal";
+ m.innerHTML=`<div class="mb"><div style="text-align:right;cursor:pointer" id="x">✕</div><div class="res ${ok?"ok":"ko"}">${ok?"BIEN JOUÉ !":"RATÉ !"}</div>
+ ${streak>1?`<div style="text-align:center;color:#ff4d8d;font-weight:800;margin-bottom:12px;">🔥 Série : ${streak} d'affilée !</div>`:""}
+ <div class="cmp"><div><small>TON CHOIX</small>${gem(my)}<b>${my}</b></div><div class="g"><small>SON VRAI RANK</small>${gem(d.rank)}<b>${d.rank}${d.div?" "+d.div:""}</b></div></div>
+ <div class="acc" id="acc"><span>Voir les votes du public</span><span>${tot} vote${tot>1?"s":""} ⌄</span></div><div id="vt" hidden>${rows}<small style="color:var(--mut)">Votes du public au moment de ta validation.</small></div>
+ <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+   <button class="btn" id="share">📤 Partager</button>
+   <button class="btn" id="report" style="color:#ff6b8b">🚩 Signaler</button>
+   <button class="go" id="nx" style="flex:1;min-width:120px">Next →</button>
+ </div></div>`;
+ document.body.appendChild(m);
+ m.querySelector("#acc").onclick=()=>{const v=m.querySelector("#vt");v.hidden=!v.hidden};
+ m.querySelector("#x").onclick=()=>m.remove();
+ m.querySelector("#nx").onclick=()=>{m.remove();cur++;pick="";render();};
+ m.querySelector("#share").onclick=()=>{
+   navigator.clipboard.writeText(location.origin+"#play");
+   m.querySelector("#share").textContent="✅ Lien copié !";
+ };
+ m.querySelector("#report").onclick=async()=>{
+   await reportClip(clipId);
+   m.querySelector("#report").textContent="✅ Signalé";
+ };
+}
+addEventListener("hashchange",()=>{pick="";render()});
+(async()=>{
+ try{S={...S,...await (await fetch("/api/settings")).json()}}catch(e){}
+ try{clips=await (await fetch("/api/clips?uid="+encodeURIComponent(uid))).json()}catch(e){}
+ apply();render();
+})();
+</script></body></html>
