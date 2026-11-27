@@ -22,7 +22,6 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 .vid-box{width:100%; max-width:500px; margin-top:12px; border-radius:12px; overflow:hidden; background:#000;}
 .vid-box video, .vid-box iframe, .vid-box img{width:100%; aspect-ratio:16/9; display:block; border:0; object-fit: contain;}
 .preview-container { background: radial-gradient(ellipse at 15% 0, #ff4d8d33 0, transparent 45%), radial-gradient(ellipse at 90% 60%, #ff4d8d22 0, transparent 45%), #0b060b; border-radius: 16px; border: 2px dashed #2e1827; padding: 20px; margin-top: 10px; overflow-x: auto;}
-.preview-container.over { border-color: #ff4d8d; }
 .preview-zone { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; min-height: 60px; margin: 20px 0; padding: 10px; border-radius: 12px; transition: 0.2s; align-items: flex-start;}
 .preview-zone.over { background: #ff4d8d11; box-shadow: inset 0 0 0 1px #ff4d8d; }
 .lk-btn{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:16px;border:1px solid #2e1827;background:#150b13e6;color:#fbeff5;text-decoration:none;font-weight:800;position:relative; cursor: grab; transition: box-shadow 0.2s, opacity 0.2s;}
@@ -52,21 +51,52 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 .pv-stage iframe{width:100%;height:100%;border:1px solid #2e1827;border-radius:16px;background:#fff;box-shadow:0 20px 50px #0008;transition:max-width .25s ease;}
 .pv-stage.tablet iframe{max-width:820px;}
 .pv-stage.mobile iframe{max-width:400px;}
-.pv-hint{text-align:center;font-size:11px;color:#b99aab;margin-bottom:12px;}
+.pv-hint{text-align:center;font-size:12px;color:#b99aab;margin-bottom:12px;padding:10px;background:#150b13;border:1px solid #2e1827;border-radius:10px;}
 .pv-hint b{color:#ff4d8d;}
 @media(max-width:640px){
   .pv-controls button span.lbl{display:none;}
   .pv-stage{height:calc(100vh - 300px);}
 }
+
+/* ===== ÉDITEUR VISUEL (drag & drop) ===== */
+.editor-canvas{background:radial-gradient(ellipse at 15% 0,#ff4d8d22 0,transparent 45%),#0b060b;border-radius:16px;border:2px dashed #2e1827;padding:20px;margin:10px 0 20px;min-height:300px;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ed-block-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:700px){.ed-block-grid{grid-template-columns:1fr;}}
+.ed-block-stack{display:flex;flex-direction:column;gap:10px;}
+.ed-card{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#150b13;border:1px solid #2e1827;border-radius:14px;cursor:grab;transition:border-color .15s,background .15s,transform .15s;position:relative;user-select:none;}
+.ed-card:active{cursor:grabbing;}
+.ed-card:hover{border-color:#5a2c48;transform:translateY(-1px);}
+.ed-card.drag-over{border-color:#ff4d8d;background:#ff4d8d22;box-shadow:0 0 0 1px #ff4d8d inset;}
+.ed-card.full{grid-column:span 2;}
+@media(max-width:700px){.ed-card.full{grid-column:span 1;}}
+.ed-handle{font-size:16px;color:#5a2c48;font-weight:800;letter-spacing:-2px;padding:0 4px;user-select:none;}
+.ed-card:hover .ed-handle{color:#ff4d8d;}
+.ed-icon{width:42px;height:42px;border-radius:10px;background:#ff4d8d22;display:grid;place-items:center;font-size:20px;flex:none;}
+.ed-body{flex:1;min-width:0;}
+.ed-body b{display:block;font-size:14px;margin-bottom:3px;}
+.ed-body small{color:#b99aab;font-size:11px;line-height:1.3;display:block;}
+.ed-actions{display:flex;gap:4px;flex:none;}
+.ed-actions button{width:30px;height:30px;padding:0;display:grid;place-items:center;border-radius:8px;font-size:13px;font-weight:700;}
+.ed-actions button:disabled{opacity:0.3;cursor:not-allowed;}
+.ed-actions button.ed-width{width:auto;padding:0 10px;font-size:14px;}
+.ed-zone-label{text-align:center;font-size:11px;color:#b99aab;text-transform:uppercase;letter-spacing:.15em;margin:14px 0 10px;padding:8px;background:#150b13;border-radius:8px;}
+.ed-zone-label:first-child{margin-top:0;}
 </style></head><body><div class="w" id="app"></div><div id="t"></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const getMedalId = u => { const m = String(u).match(/medal\.tv\/(?:games\/[^/]+\/)?clips?\/([a-zA-Z0-9]+)/); return m?m[1]:""; };
 let ME=null,cfg=null,tab="look",clips=[],reports=[],bans=[],comments=[],bugs=[], adminSearch="";
 let pvMode = localStorage.getItem("admin_pv_mode") || "desktop";
+let pvView = localStorage.getItem("admin_pv_view") || "iframe";
+let edTab  = localStorage.getItem("admin_ed_tab") || "submit";
 const H=()=>({});
 const SL={clip:"Clip vidéo",rank:"Choix du rang",identity:"Pseudo + Discord",platform:"PC / Console",send:"Autorisation + envoi"};
 const PL={filters:"Filtres (Tous / PC / Console)",info:"Pseudo du joueur + navigation",video:"Vidéo",ranks:"Boutons de rang + validation"};
+const SUBMIT_ICONS={clip:"🎬",rank:"🏆",identity:"👤",platform:"🎮",send:"🚀"};
+const SUBMIT_DESC={clip:"Upload / YouTube / Medal",rank:"9 rangs + division",identity:"Pseudo + Discord",platform:"PC ou Console",send:"Autorisation + envoi"};
+const PLAY_ICONS={filters:"🔍",info:"👤",video:"🎬",ranks:"🏆"};
+const PLAY_DESC={filters:"Boutons Tous / PC / Console",info:"Pseudo, plateforme, bouton suivant",video:"Vidéo du clip",ranks:"9 rangs + bouton valider"};
 const toast=m=>{const t=$("#t");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2200)};
 
 function getAutoLogo(l) {
@@ -83,22 +113,50 @@ function getAutoLogo(l) {
   return null;
 }
 
-// ===== APERÇU : contrôleurs =====
-function pvDevice(m){
-  pvMode = m;
-  localStorage.setItem("admin_pv_mode", m);
-  const stage = document.querySelector(".pv-stage");
-  if(stage){
-    stage.className = "pv-stage " + m;
-    document.querySelectorAll(".pv-controls button[data-mode]").forEach(b=>{
-      b.classList.toggle("on", b.dataset.mode === m);
-    });
-  } else { draw(); }
+// ===== APERÇU : contrôles =====
+function pvDevice(m){ pvMode=m; localStorage.setItem("admin_pv_mode",m); draw(); }
+function pvViewSet(v){ pvView=v; localStorage.setItem("admin_pv_view",v); draw(); }
+function edSetTab(t){ edTab=t; localStorage.setItem("admin_ed_tab",t); draw(); }
+function refreshPreview(){ const f=document.getElementById("site-preview"); if(f) f.src="/?_="+Date.now(); else draw(); }
+function toggleBlockWidth(type,i){ if(type==="submit"){ const b=cfg.submitBlocks[i]; if(b.id==="send") return; b.w=b.w==="full"?"half":"full"; draw(); } }
+
+// ===== RENDER EDITORS =====
+function renderSubmitEditor(){
+  return `<div class="ed-block-grid">${cfg.submitBlocks.map((b,i)=>`
+    <div class="ed-card ${b.w==="full"?"full":""}" draggable="true" data-type="submit" data-i="${i}">
+      <div class="ed-handle">⋮⋮</div>
+      <div class="ed-icon">${SUBMIT_ICONS[b.id]||"▪"}</div>
+      <div class="ed-body"><b>${SL[b.id]||b.id}</b><small>${SUBMIT_DESC[b.id]||""}</small></div>
+      <div class="ed-actions">
+        ${b.id!=="send"?`<button class="ed-width" onclick="event.stopPropagation();toggleBlockWidth('submit',${i})" title="${b.w==="full"?"Passer en demi-largeur":"Passer en pleine largeur"}">${b.w==="full"?"↔":"⬌"}</button>`:""}
+        <button onclick="event.stopPropagation();mv('submitBlocks',${i},-1)" ${i===0?"disabled":""} title="Monter">↑</button>
+        <button onclick="event.stopPropagation();mv('submitBlocks',${i},1)" ${i===cfg.submitBlocks.length-1?"disabled":""} title="Descendre">↓</button>
+      </div>
+    </div>`).join("")}</div>`;
 }
-function refreshPreview(){
-  const f = document.getElementById("site-preview");
-  if(f) f.src = "/?_=" + Date.now();
-  else draw();
+function renderPlayEditor(){
+  return `<div class="ed-block-stack">${cfg.playBlocks.map((b,i)=>`
+    <div class="ed-card" draggable="true" data-type="play" data-i="${i}">
+      <div class="ed-handle">⋮⋮</div>
+      <div class="ed-icon">${PLAY_ICONS[b]||"▪"}</div>
+      <div class="ed-body"><b>${PL[b]||b}</b><small>${PLAY_DESC[b]||""}</small></div>
+      <div class="ed-actions">
+        <button onclick="event.stopPropagation();mv('playBlocks',${i},-1)" ${i===0?"disabled":""} title="Monter">↑</button>
+        <button onclick="event.stopPropagation();mv('playBlocks',${i},1)" ${i===cfg.playBlocks.length-1?"disabled":""} title="Descendre">↓</button>
+      </div>
+    </div>`).join("")}</div>`;
+}
+function renderLinksEditor(){
+  return `
+    <div class="ed-zone-label">⬆ Menu du haut (nav)</div>
+    <div class="preview-nav" data-zone="top">${cfg.links.map((l,i)=>l.pos==="top"?renderRealBtn(l,i):"").join("")}</div>
+    <div class="ed-zone-label">⬇ Pied de page (footer)</div>
+    <div class="preview-zone" data-zone="bottom">${cfg.links.map((l,i)=>l.pos==="bottom"?renderRealBtn(l,i):"").join("")}</div>
+    <div style="text-align:center;margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="pk" onclick="addLink()">+ Ajouter un lien</button>
+      <button onclick="tab='links';draw()">⚙️ Éditer les détails des liens</button>
+    </div>
+  `;
 }
 
 function loginView(){
@@ -147,10 +205,17 @@ const renderRealBtn = (l, i) => {
 }
 
 function draw(){
- // Toggle layout for preview
- $("#app").classList.toggle("pv-on", tab==="preview");
-
- const tabs=[["look","🎨 Apparence"],["links","Mise en page"],["layout","Ordre des blocs"],["preview","🔍 Aperçu du site"],["clips","Clips"],["reports","Signalements"],["comments","Commentaires"],["bugs","Bugs 🐞"],["bans","Bannis"]];
+ const tabs=[
+   ["look","🎨 Apparence"],
+   ["links","🔗 Mise en page"],
+   ["layout","📋 Ordre des blocs"],
+   ["preview","🔍 Aperçu & Éditeur"],
+   ["clips","🎬 Clips"],
+   ["reports","🚩 Signalements"],
+   ["comments","💬 Commentaires"],
+   ["bugs","🐞 Bugs"],
+   ["bans","⛔ Bannis"]
+ ];
  let b="";
  
  if(tab==="look")b=`<div class="box"><div class="g2">${T("name","Nom du site",cfg.name)}${T("tagline","Sous-titre",cfg.tagline)}
@@ -186,20 +251,40 @@ function draw(){
  if(tab==="layout")b=`<div class="box"><b>Page d’envoi</b>`+cfg.submitBlocks.map((x,i)=>`<div class="row"><span>${SL[x.id]}</span><span><select data-k="submitBlocks.${i}.w"><option value="half" ${x.w!=="full"?"selected":""}>Demi</option><option value="full" ${x.w==="full"?"selected":""}>Pleine</option></select> <button onclick="mv('submitBlocks',${i},-1)">↑</button> <button onclick="mv('submitBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>
  <div class="box"><b>Page de jeu</b>`+cfg.playBlocks.map((x,i)=>`<div class="row"><span>${PL[x]}</span><span><button onclick="mv('playBlocks',${i},-1)">↑</button> <button onclick="mv('playBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>`;
 
- // ===== NOUVEL ONGLET APERÇU =====
+ // ===== APERÇU + ÉDITEUR =====
  if(tab==="preview") {
-   b = `<div class="pv-hint">💡 Aperçu du site en temps réel — les <b>modifications non enregistrées</b> ne sont pas visibles ici. Clique sur <b>💾 Enregistrer</b> puis <b>🔄</b> pour actualiser.</div>
+   const isIframe = pvView==="iframe";
+   b = `
    <div class="pv-controls">
-     <button data-mode="desktop" class="${pvMode==='desktop'?'on':''}" onclick="pvDevice('desktop')" title="Desktop (1200px+)">🖥️<span class="lbl"> Desktop</span></button>
-     <button data-mode="tablet" class="${pvMode==='tablet'?'on':''}" onclick="pvDevice('tablet')" title="Tablette (768px)">💻<span class="lbl"> Tablette</span></button>
-     <button data-mode="mobile" class="${pvMode==='mobile'?'on':''}" onclick="pvDevice('mobile')" title="Mobile (390px)">📱<span class="lbl"> Mobile</span></button>
+     <button class="${isIframe?'on':''}" onclick="pvViewSet('iframe')">👁 Aperçu visuel</button>
+     <button class="${!isIframe?'on':''}" onclick="pvViewSet('editor')">✏️ Éditeur drag & drop</button>
      <div class="sep"></div>
-     <button onclick="refreshPreview()" title="Recharger l'aperçu">🔄<span class="lbl"> Rafraîchir</span></button>
+     ${isIframe ? `
+       <button data-mode="desktop" class="${pvMode==='desktop'?'on':''}" onclick="pvDevice('desktop')" title="Desktop">🖥️<span class="lbl"> Desktop</span></button>
+       <button data-mode="tablet" class="${pvMode==='tablet'?'on':''}" onclick="pvDevice('tablet')" title="Tablette (820px)">💻<span class="lbl"> Tablette</span></button>
+       <button data-mode="mobile" class="${pvMode==='mobile'?'on':''}" onclick="pvDevice('mobile')" title="Mobile (400px)">📱<span class="lbl"> Mobile</span></button>
+       <div class="sep"></div>
+       <button onclick="refreshPreview()">🔄<span class="lbl"> Rafraîchir</span></button>
+     ` : `
+       <button class="${edTab==='submit'?'on':''}" onclick="edSetTab('submit')">📤 Page d'envoi</button>
+       <button class="${edTab==='play'?'on':''}" onclick="edSetTab('play')">🎮 Page de jeu</button>
+       <button class="${edTab==='links'?'on':''}" onclick="edSetTab('links')">🔗 Liens</button>
+     `}
      <button onclick="window.open('/','_blank')" title="Ouvrir dans un nouvel onglet">↗<span class="lbl"> Ouvrir</span></button>
    </div>
-   <div class="pv-stage ${pvMode}">
-     <iframe id="site-preview" src="/?_=${Date.now()}" title="Aperçu du site"></iframe>
-   </div>`;
+   ${isIframe ? `
+     <div class="pv-hint">💡 Aperçu temps réel. <b>Enregistre</b> puis clique sur <b>🔄</b> pour voir tes changements.</div>
+     <div class="pv-stage ${pvMode}">
+       <iframe id="site-preview" src="/?_=${Date.now()}" title="Aperçu du site"></iframe>
+     </div>
+   ` : `
+     <div class="pv-hint">💡 Glisse les blocs pour les réorganiser · Clique sur <b>⬌/↔</b> pour changer la largeur · <b>N'oublie pas d'enregistrer</b> en bas.</div>
+     <div class="editor-canvas">
+       ${edTab==='submit' ? renderSubmitEditor() : ''}
+       ${edTab==='play' ? renderPlayEditor() : ''}
+       ${edTab==='links' ? renderLinksEditor() : ''}
+     </div>
+   `}`;
  }
 
  if(tab==="clips") {
@@ -231,22 +316,70 @@ function draw(){
  
  $("#app").innerHTML=`<div class="hd"><h1>Admin · ${esc(cfg.name)}</h1><div class="me">${ME.avatar?`<img src="${esc(ME.avatar)}" alt="">`:`<div class="av"></div>`}<span><b>${esc(ME.name)}</b><small>${ME.owner?"Owner":"Admin"}</small></span><button onclick="logout()">Déconnexion</button></div></div>
  <div class="tabs">${tabs.map(([k,l])=>`<button class="${tab===k?"on":""}" onclick="tab='${k}';${['clips','reports','comments','bugs','bans'].includes(k)?'loadData()':'draw()'}">${l}</button>`).join("")}</div>${b}
- <div class="bar"><button class="pk" onclick="save()" style="padding:12px 30px;font-size:16px;">💾 Enregistrer</button><button onclick="window.open('/','_blank')">↗ Voir le site</button>${tab==='preview'?`<button onclick="refreshPreview()">🔄 Actualiser</button>`:""}</div>`;
+ <div class="bar"><button class="pk" onclick="save()" style="padding:12px 30px;font-size:16px;">💾 Enregistrer</button><button onclick="window.open('/','_blank')">↗ Voir le site</button>${tab==='preview'&&pvView==='iframe'?`<button onclick="refreshPreview()">🔄 Actualiser</button>`:""}</div>`;
 }
 
 boot();
 
-let dragI=null;
-document.addEventListener("dragstart",e=>{const t=e.target.closest?.(".lk-btn");if(!t)return;dragI=+t.dataset.i;t.style.opacity="0.4";e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","x");});
-document.addEventListener("dragend",()=>{dragI=null;document.querySelectorAll(".lk-btn").forEach(x=>x.style.opacity="1");document.querySelectorAll(".preview-zone, .preview-nav").forEach(x=>x.classList.remove("over"));});
-document.addEventListener("dragover",e=>{const z=e.target.closest?.(".preview-zone, .preview-nav");if(z&&dragI!==null){e.preventDefault();document.querySelectorAll(".preview-zone, .preview-nav").forEach(x=>x.classList.toggle("over",x===z));}});
-document.addEventListener("drop",e=>{const z=e.target.closest?.(".preview-zone, .preview-nav");if(!z||dragI===null)return;e.preventDefault();
- const tiles=[...z.querySelectorAll(".lk-btn:not([style*='opacity: 0.4'])")];let before=null;
- for(const t of tiles){const r=t.getBoundingClientRect();if(e.clientY<r.bottom&&(e.clientY<r.top||e.clientX<r.left+r.width/2)){before=cfg.links[+t.dataset.i];break}}
- const [it]=cfg.links.splice(dragI,1);it.pos=z.dataset.zone;const bi=before?cfg.links.indexOf(before):-1;
- if(bi>=0)cfg.links.splice(bi,0,it);else cfg.links.push(it);dragI=null;draw();});
-document.addEventListener("pointerdown",e=>{const h=e.target.closest?.(".rz");if(!h)return;e.preventDefault();e.stopPropagation();
- const t=h.parentNode,l=cfg.links[+h.dataset.i],r=t.getBoundingClientRect(),x0=e.clientX,y0=e.clientY;t.draggable=false;h.setPointerCapture(e.pointerId);
- h.onpointermove=ev=>{l.w=Math.round(Math.min(460,Math.max(80,r.width+ev.clientX-x0)));l.h=Math.round(Math.min(200,Math.max(40,r.height+ev.clientY-y0)));t.style.width=l.w+"px";t.style.minHeight=l.h+"px";};
- h.onpointerup=()=>{h.onpointermove=h.onpointerup=null;t.draggable=true;};});
+let dragI=null, edDrag=null;
+
+// --- Drag & drop : LIENS (préexistant) ---
+document.addEventListener("dragstart",e=>{
+  const t=e.target.closest?.(".lk-btn");
+  if(t){ dragI=+t.dataset.i; t.style.opacity="0.4"; e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain","x"); return; }
+  const eb=e.target.closest?.(".ed-card");
+  if(eb){ edDrag={type:eb.dataset.type,i:+eb.dataset.i}; eb.style.opacity="0.4"; e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain","x"); }
+});
+document.addEventListener("dragend",()=>{
+  dragI=null; edDrag=null;
+  document.querySelectorAll(".lk-btn,.ed-card").forEach(x=>x.style.opacity="1");
+  document.querySelectorAll(".preview-zone,.preview-nav,.ed-card").forEach(x=>x.classList.remove("over","drag-over"));
+});
+document.addEventListener("dragover",e=>{
+  const z=e.target.closest?.(".preview-zone, .preview-nav");
+  if(z && dragI!==null){ e.preventDefault(); document.querySelectorAll(".preview-zone,.preview-nav").forEach(x=>x.classList.toggle("over",x===z)); return; }
+  const eb=e.target.closest?.(".ed-card");
+  if(eb && edDrag && eb.dataset.type===edDrag.type){
+    e.preventDefault();
+    document.querySelectorAll(".ed-card").forEach(x=>x.classList.toggle("drag-over",x===eb));
+  }
+});
+document.addEventListener("drop",e=>{
+  // Drop de lien
+  const z=e.target.closest?.(".preview-zone, .preview-nav");
+  if(z && dragI!==null){
+    e.preventDefault();
+    const tiles=[...z.querySelectorAll(".lk-btn:not([style*='opacity: 0.4'])")];
+    let before=null;
+    for(const t of tiles){const r=t.getBoundingClientRect();if(e.clientY<r.bottom&&(e.clientY<r.top||e.clientX<r.left+r.width/2)){before=cfg.links[+t.dataset.i];break}}
+    const [it]=cfg.links.splice(dragI,1); it.pos=z.dataset.zone;
+    const bi=before?cfg.links.indexOf(before):-1;
+    if(bi>=0) cfg.links.splice(bi,0,it); else cfg.links.push(it);
+    dragI=null; draw(); return;
+  }
+  // Drop de bloc éditeur
+  const eb=e.target.closest?.(".ed-card");
+  if(eb && edDrag && eb.dataset.type===edDrag.type){
+    e.preventDefault();
+    const arr = edDrag.type==="submit" ? cfg.submitBlocks : cfg.playBlocks;
+    const from = edDrag.i, to = +eb.dataset.i;
+    if(from!==to){
+      const [item] = arr.splice(from,1);
+      arr.splice(to,0,item);
+      draw();
+    }
+    edDrag=null;
+  }
+});
+
+// --- Resize handle (préexistant) ---
+document.addEventListener("pointerdown",e=>{
+  const h=e.target.closest?.(".rz");
+  if(!h)return;
+  e.preventDefault();e.stopPropagation();
+  const t=h.parentNode,l=cfg.links[+h.dataset.i],r=t.getBoundingClientRect(),x0=e.clientX,y0=e.clientY;
+  t.draggable=false;h.setPointerCapture(e.pointerId);
+  h.onpointermove=ev=>{l.w=Math.round(Math.min(460,Math.max(80,r.width+ev.clientX-x0)));l.h=Math.round(Math.min(200,Math.max(40,r.height+ev.clientY-y0)));t.style.width=l.w+"px";t.style.minHeight=l.h+"px";};
+  h.onpointerup=()=>{h.onpointermove=h.onpointerup=null;t.draggable=true;};
+});
 </script></body></html>
