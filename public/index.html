@@ -576,4 +576,51 @@ function modal(d,ok,clipId){
    <small style="color:var(--mut)">Discussion :</small>
    <div id="cmt-list" style="margin-top:8px;"></div>
    <div style="display:flex;gap:8px;margin-top:8px;">
-     <input type="text" id="cmt-input" placeholder="Laisse un commentaire..." style="padding:8px; font-size:12
+     <input type="text" id="cmt-input" placeholder="Laisse un commentaire..." style="padding:8px; font-size:12px;">
+     <button class="btn" onclick="sendComment('${clipId}')" style="padding:8px 12px;">Envoyer</button>
+   </div>
+ </div>
+
+ <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+   <button class="btn" id="share">📤 Partager</button>
+   <button class="btn" id="report" style="color:#ff6b8b">🚩 Signaler</button>
+   <button class="go" id="nx" style="flex:1;min-width:120px">Next →</button>
+ </div></div>`;
+ document.body.appendChild(m);
+ 
+ loadComments(clipId);
+
+ m.querySelector("#acc").onclick=()=>{const v=m.querySelector("#vt");v.hidden=!v.hidden};
+ m.querySelector("#x").onclick=()=>m.remove();
+ m.querySelector("#nx").onclick=()=>{m.remove();cur++;pick="";render();};
+ m.querySelector("#share").onclick=()=>{ navigator.clipboard.writeText(location.origin+"#play"); m.querySelector("#share").textContent="✅ Lien copié !"; };
+ m.querySelector("#report").onclick=async()=>{ await reportClip(clipId); m.querySelector("#report").textContent="✅ Signalé"; };
+}
+
+async function loadComments(clipId){
+  try {
+    const r = await fetch("/api/clips/"+clipId+"/comments");
+    const cmts = await r.json();
+    const list = $("#cmt-list");
+    if(list) list.innerHTML = cmts.length ? cmts.map(c => `<div class="cmt"><b>${esc(c.pseudo)}</b> : ${esc(c.text)}</div>`).join("") : "<small style='color:var(--mut)'>Aucun commentaire.</small>";
+  } catch(e) {}
+}
+async function sendComment(clipId){
+  const input = $("#cmt-input");
+  if(!input.value.trim()) return;
+  await fetch("/api/clips/"+clipId+"/comment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pseudo:myPseudo,text:input.value})});
+  input.value = "";
+  loadComments(clipId);
+}
+
+addEventListener("hashchange",()=>{pick="";render()});
+(async()=>{
+ try{S={...S,...await (await fetch("/api/settings")).json()}}catch(e){}
+ try{clips=await (await fetch("/api/clips?uid="+encodeURIComponent(uid))).json()}catch(e){}
+ apply();render();
+ if(!ls("om_onboarded", false)){
+   if(myPseudo) sv("om_onboarded", true);
+   else setTimeout(showOnboarding, 250);
+ }
+})();
+</script></body></html>
