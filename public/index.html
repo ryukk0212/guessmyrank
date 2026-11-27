@@ -43,6 +43,12 @@ body{background:radial-gradient(ellipse at 15% 0,color-mix(in srgb,var(--p) 20%,
 a,button,.opt,.rk,.tabs span,input[type=checkbox]{cursor:url('/cursor-pointer.png'),pointer;}
 button,.rk,.opt{-webkit-tap-highlight-color:transparent; user-select:none;}
 #bgimg,#dim{position:fixed;inset:-60px;background-size:cover;background-position:center;z-index:0;pointer-events:none}#dim{inset:0;background:var(--bg);opacity:0}
+/* Effet Violet & Discret pour le fond */
+#bgimg {
+  /* On applique le filtre qui transforme le rouge en violet */
+  filter: blur(18px) sepia(1) hue-rotate(200deg) saturate(2.5) brightness(0.6) !important;
+  opacity: 0.85; /* Ajuste ici si tu veux que ce soit plus ou moins visible */
+}
 .wrap{position:relative;z-index:1;max-width:1100px;margin:auto;padding:max(28px,env(safe-area-inset-top)) 18px 60px}
 .logo{font:800 44px Syne,sans-serif;color:var(--p);text-align:center;letter-spacing:-1px}
 .sub{text-align:center;font-size:11px;letter-spacing:.35em;color:var(--p);margin-top:6px}
@@ -378,7 +384,17 @@ function apply(){
  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
  if(isLight){ r.removeProperty("--bg"); } else { r.setProperty("--bg",S.bg); }
  document.title=S.name+" · Guess My Rank";if(S.favicon)$("#fav").href=S.favicon;
- const b=$("#bgimg");b.style.backgroundImage=S.bgImage?`url("${S.bgImage}")`:"none";b.style.filter=`blur(${S.blur}px)`;$("#dim").style.opacity=S.bgImage?S.dim:0;
+ 
+ const b=$("#bgimg");
+ // --- MODIFICATION ICI ---
+ b.style.backgroundImage = "url('/kurumi-bg.jpg')"; // On force l'image
+ b.style.backgroundSize = "cover";
+ b.style.backgroundPosition = "center";
+ // On garde le flou dynamique défini dans l'admin
+ b.style.filter = `blur(${S.blur}px) sepia(1) hue-rotate(200deg) saturate(2.5) brightness(0.6)`;
+ 
+ // On s'assure que l'overlay sombre est bien appliqué pour rendre le texte lisible
+ $("#dim").style.opacity = S.bgImage ? S.dim : 0.6; 
 }
 function lsz(l){const w=l.w>0?l.w:(l.big?420:210);return `width:min(100%,${w}px);`+(l.h>0?`min-height:${l.h}px;`:"")}
 
