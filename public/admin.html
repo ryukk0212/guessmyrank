@@ -22,6 +22,7 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 .vid-box{width:100%; max-width:500px; margin-top:12px; border-radius:12px; overflow:hidden; background:#000;}
 .vid-box video, .vid-box iframe, .vid-box img{width:100%; aspect-ratio:16/9; display:block; border:0; object-fit: contain;}
 .preview-container { background: radial-gradient(ellipse at 15% 0, #ff4d8d33 0, transparent 45%), radial-gradient(ellipse at 90% 60%, #ff4d8d22 0, transparent 45%), #0b060b; border-radius: 16px; border: 2px dashed #2e1827; padding: 20px; margin-top: 10px; overflow-x: auto;}
+.preview-container.over { border-color: #ff4d8d; }
 .preview-zone { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; min-height: 60px; margin: 20px 0; padding: 10px; border-radius: 12px; transition: 0.2s; align-items: flex-start;}
 .preview-zone.over { background: #ff4d8d11; box-shadow: inset 0 0 0 1px #ff4d8d; }
 .lk-btn{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:16px;border:1px solid #2e1827;background:#150b13e6;color:#fbeff5;text-decoration:none;font-weight:800;position:relative; cursor: grab; transition: box-shadow 0.2s, opacity 0.2s;}
@@ -222,7 +223,13 @@ function draw(){
  <label>Couleur principale<input type="color" data-k="accent" value="${cfg.accent}"></label><label>Couleur du fond<input type="color" data-k="bg" value="${cfg.bg}"></label>
  <label>Photo de fond<input type="file" accept="image/*" data-up="bgImage"><div class="pv" style="background-image:url('${esc(cfg.bgImage)}')"></div>${cfg.bgImage?`<button onclick="cfg.bgImage='';draw()">Retirer</button>`:""}</label>
  <div><label><span>Flou : ${cfg.blur}px</span><input type="range" min="0" max="80" value="${cfg.blur}" data-k="blur" oninput="this.previousSibling.textContent='Flou : '+this.value+'px'"></label><br>
- <label><span>Assombrissement : ${Math.round(cfg.dim*100)}%</span><input type="range" min="0" max="95" value="${Math.round(cfg.dim*100)}" data-k="dim" data-d="100" oninput="this.previousSibling.textContent='Assombrissement : '+this.value+'%'"></label></div>
+ <label><span>Assombrissement : ${Math.round(cfg.dim*100)}%</span><input type="range" min="0" max="95" value="${Math.round(cfg.dim*100)}" data-k="dim" data-d="100" oninput="this.previousSibling.textContent='Assombrissement : '+this.value+'%'"></label>
+ <br><br>
+ <label class="ck" style="background:#2a1021; padding:10px; border-radius:10px; border:1px solid #4a1626;">
+   <input type="checkbox" data-k="violetFilter" ${cfg.violetFilter?"checked":""}> 
+   <span style="color:#ff4d8d; font-weight:bold;">🔮 Activer le filtre Violet (Kurumi)</span>
+ </label>
+ </div>
  <label>Favicon<input type="file" accept="image/*" data-up="favicon">${cfg.favicon?`<img src="${esc(cfg.favicon)}" width="40"><button onclick="cfg.favicon='';draw()">Retirer</button>`:"<small>Aucune</small>"}</label></div></div>`;
 
  if(tab==="links") {

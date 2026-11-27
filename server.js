@@ -46,11 +46,12 @@ async function loadDb() {
     if (!db.reports) db.reports = [];
     if (!db.bans) db.bans = [];
     if (!db.comments) db.comments = [];
-    if (!db.bugs) db.bugs = []; // Ajout des bugs
+    if (!db.bugs) db.bugs = [];
   } catch (err) { console.log("Nouvelle DB initialisée"); }
 }
 
-const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff4d8d", bg: "#0b060b", bgImage: "", blur: 18, dim: 0.6, favicon: "",
+// AJOUT DE violetFilter ICI
+const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff4d8d", bg: "#0b060b", bgImage: "", blur: 18, dim: 0.6, favicon: "", violetFilter: false,
   submitBlocks: ["clip","rank","identity","platform","send"].map(id => ({ id, w: id === "send" ? "full" : "half" })),
   playBlocks: ["filters","info","video","ranks"],
   links: [
@@ -189,6 +190,7 @@ function sanitize(b = {}) {
   const sb = uniq((b.submitBlocks || []).filter(x => x && x.id), sIds, x => x.id || x).map(x => typeof x === "string" ? { id: x, w: "half" } : { id: x.id, w: x.w === "full" ? "full" : "half" });
   return { name: clean(b.name, 40) || DEF.name, tagline: clean(b.tagline, 60), accent: col(b.accent, DEF.accent), bg: col(b.bg, DEF.bg),
     bgImage: img(b.bgImage), favicon: img(b.favicon), blur: Math.min(80, Math.max(0, +b.blur || 0)), dim: Math.min(0.95, Math.max(0, +b.dim || 0)),
+    violetFilter: !!b.violetFilter, // AJOUTÉ ICI
     submitBlocks: sb, playBlocks: uniq(b.playBlocks, DEF.playBlocks, x => x),
     links: (Array.isArray(b.links) ? b.links : []).slice(0, 20).map(l => ({ id: clean(l.id, 20) || id(), label: clean(l.label, 60), sub: clean(l.sub, 100),
       url: lnk(l.url), color: col(l.color, "#ff4d8d"), icon: clean(l.icon, 4), iconImg: img(l.iconImg), pos: l.pos === "top" ? "top" : "bottom", big: !!l.big,
