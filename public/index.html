@@ -96,7 +96,7 @@ video,iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background
 .cmt{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;font-size:13px;}
 
 /* ===== TOP RIGHT ACTIONS (Thème + Bug) ===== */
-.top-right-actions{position:fixed;top:20px;right:20px;z-index:100;display:flex;gap:10px;align-items:center;}
+.top-right-actions{position:absolute;top:20px;right:20px;z-index:100;display:flex;gap:10px;align-items:center;}
 .theme-btn{width:44px;height:44px;border-radius:50%;background:var(--card);border:1px solid var(--line);color:var(--tx);font-size:20px;display:grid;place-items:center;box-shadow:0 4px 15px #0008;transition:0.25s;padding:0;line-height:1;}
 .theme-btn:hover{background:var(--p);color:var(--on-accent);border-color:var(--p);transform:translateY(-2px) rotate(15deg);}
 .bug-btn{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:10px 16px;border-radius:30px;font-weight:800;display:flex;align-items:center;gap:8px;box-shadow:0 4px 15px #0008;transition:0.2s;}
@@ -116,7 +116,7 @@ video,iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background
 @keyframes blink{from{opacity:0.4}to{opacity:1}}
 
 /* BADGE UTILISATEUR (top-left) */
-.user-badge{position:fixed;top:20px;left:20px;z-index:99;display:flex;align-items:center;gap:10px;background:var(--bar);border:1px solid var(--line);padding:6px 14px 6px 6px;border-radius:30px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 4px 15px #0008;cursor:url('/cursor-pointer.png'),pointer;transition:0.2s;}
+.user-badge{position:absolute;top:20px;left:20px;z-index:99;display:flex;align-items:center;gap:10px;background:var(--bar);border:1px solid var(--line);padding:6px 14px 6px 6px;border-radius:30px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 4px 15px #0008;cursor:url('/cursor-pointer.png'),pointer;transition:0.2s;}
 .user-badge:hover{border-color:var(--p);transform:translateY(-2px);}
 .user-badge img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--line);flex:none;}
 .user-badge .ph{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--p2));display:grid;place-items:center;font-weight:800;color:var(--on-accent);font-size:14px;flex:none;}
