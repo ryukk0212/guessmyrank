@@ -8,7 +8,7 @@ button{background:#1c0f19;border:1px solid #2e1827;color:#fbeff5;border-radius:1
 .box{background:#150b13;border:1px solid #2e1827;border-radius:16px;padding:16px;margin-bottom:14px}.row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.g2{grid-template-columns:1fr}}
 label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#b99aab}label.ck{flex-direction:row;align-items:center;gap:8px}
-input[type=text],input[type=password],select{background:#0e070d;border:1px solid #2e1827;color:#fbeff5;border-radius:10px;padding:10px}input[type=color]{width:100%;height:40px;border:0;background:none;padding:0}
+input[type=text],input[type=password],input[type=date],textarea,select{background:#0e070d;border:1px solid #2e1827;color:#fbeff5;border-radius:10px;padding:10px;font-family:inherit;}input[type=color]{width:100%;height:40px;border:0;background:none;padding:0}
 .bar{position:fixed;bottom:0;left:0;right:0;background:#150b13ee;border-top:1px solid #2e1827;padding:12px;display:flex;gap:10px;justify-content:center;z-index:100;backdrop-filter:blur(10px);}
 #t{position:fixed;top:14px;right:14px;background:#ff4d8d;color:#2a0716;padding:10px 16px;border-radius:10px;display:none;font-weight:700;z-index:101;}
 .pv{height:90px;border-radius:12px;background:#222 center/cover;margin-top:6px}small{color:#b99aab}
@@ -84,6 +84,10 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 .ed-zone-label{text-align:center;font-size:11px;color:#b99aab;text-transform:uppercase;letter-spacing:.15em;margin:14px 0 10px;padding:8px;background:#150b13;border-radius:8px;}
 .ed-zone-label:first-child{margin-top:0;}
 .ip-box{font-family:monospace; background:#2a1021; padding:2px 6px; border-radius:4px; font-size:11px; color:#ff6b8b;}
+.patch-box{border-left:4px solid #ff4d8d; background:#150b13; padding:15px; border-radius:10px; margin-bottom:15px;}
+.patch-box h3{margin:0 0 5px; color:#ff4d8d;}
+.patch-box small{display:block; margin-bottom:10px; color:#b99aab;}
+.patch-box ul{margin:0; padding-left:20px; color:#ddd;}
 </style></head><body><div class="w" id="app"></div><div id="t"></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -165,7 +169,7 @@ function loginView(){
  <small class="ov">ESPACE PRIVÉ</small><h2>CONNEXION DISCORD</h2>${err?`<div class="er">${esc(M[err])}</div>`:""}
  <a class="dc" href="/auth/discord">Se connecter avec Discord</a><a class="back" href="/">← Retour au site</a></div>`;
 }
-async function boot(){const r=await fetch("/api/admin/me");if(!r.ok){loginView();return}ME=await r.json();cfg=await (await fetch("/api/settings")).json();draw()}
+async function boot(){const r=await fetch("/api/admin/me");if(!r.ok){loginView();return}ME=await r.json();cfg=await (await fetch("/api/settings")).json();if(!cfg.patchnotes)cfg.patchnotes=[];draw()}
 async function logout(){await fetch("/auth/logout",{method:"POST"});location.href="/admin"}
 function set(p,v){const k=p.split(".");let o=cfg;while(k.length>1)o=o[k.shift()];o[k[0]]=v}
 document.addEventListener("input",e=>{const t=e.target,k=t.dataset.k;if(!k)return;set(k,t.type==="checkbox"?t.checked:t.type==="range"?+t.value/(t.dataset.d||1):t.value)});
@@ -206,11 +210,18 @@ const renderRealBtn = (l, i) => {
   </div>`;
 }
 
+// PATCH NOTES ADMIN LOGIC
+function addPatchNote(){ cfg.patchnotes.unshift({version:"v1.0", date:new Date().toISOString().split('T')[0], title:"Nouvelle Mise à Jour", changes:["Nouveau changement"]}); draw(); }
+function delPatchNote(i){ if(confirm("Supprimer ce patch note ?")){ cfg.patchnotes.splice(i,1); draw(); } }
+function addPatchLine(i){ cfg.patchnotes[i].changes.push("Nouveau changement"); draw(); }
+function delPatchLine(i,j){ cfg.patchnotes[i].changes.splice(j,1); draw(); }
+
 function draw(){
  const tabs=[
    ["look","🎨 Apparence"],
    ["links","🔗 Mise en page"],
    ["layout","📋 Ordre des blocs"],
+   ["patchnotes","📝 Patch Notes"],
    ["preview","🔍 Aperçu & Éditeur"],
    ["clips","🎬 Clips"],
    ["reports","🚩 Signalements"],
@@ -258,6 +269,33 @@ function draw(){
 
  if(tab==="layout")b=`<div class="box"><b>Page d’envoi</b>`+cfg.submitBlocks.map((x,i)=>`<div class="row"><span>${SL[x.id]}</span><span><select data-k="submitBlocks.${i}.w"><option value="half" ${x.w!=="full"?"selected":""}>Demi</option><option value="full" ${x.w==="full"?"selected":""}>Pleine</option></select> <button onclick="mv('submitBlocks',${i},-1)">↑</button> <button onclick="mv('submitBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>
  <div class="box"><b>Page de jeu</b>`+cfg.playBlocks.map((x,i)=>`<div class="row"><span>${PL[x]}</span><span><button onclick="mv('playBlocks',${i},-1)">↑</button> <button onclick="mv('playBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>`;
+
+ // ONGLET PATCH NOTES
+ if(tab==="patchnotes") {
+   b = `<div class="row" style="margin-bottom:20px;"><b>Gestion des Patch Notes</b><button class="pk" onclick="addPatchNote()">+ Nouveau Patch Note</button></div>`;
+   b += cfg.patchnotes.map((p,i)=>`
+     <div class="box">
+       <div class="row">
+         <b>Version : ${esc(p.version)}</b>
+         <button class="del" onclick="delPatchNote(${i})">Supprimer cette version</button>
+       </div>
+       <div class="g2">
+         <label>Version (ex: v1.2)<input type="text" data-k="patchnotes.${i}.version" value="${esc(p.version)}"></label>
+         <label>Date<input type="date" data-k="patchnotes.${i}.date" value="${esc(p.date)}"></label>
+         <label style="grid-column: span 2;">Titre de la mise à jour<input type="text" data-k="patchnotes.${i}.title" value="${esc(p.title)}"></label>
+       </div>
+       <div style="margin-top:15px; border-top:1px solid #2e1827; padding-top:15px;">
+         <div class="row"><small>Liste des changements</small> <button onclick="addPatchLine(${i})" style="padding:4px 8px; font-size:11px;">+ Ajouter ligne</button></div>
+         ${p.changes.map((c,j)=>`
+           <div style="display:flex; gap:8px; margin-bottom:8px;">
+             <input type="text" data-k="patchnotes.${i}.changes.${j}" value="${esc(c)}" style="flex:1;">
+             <button class="del" onclick="delPatchLine(${i},${j})" style="padding:0 10px;">✕</button>
+           </div>
+         `).join("")}
+       </div>
+     </div>
+   `).join("");
+ }
 
  if(tab==="preview") {
    const isIframe = pvView==="iframe";

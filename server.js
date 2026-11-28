@@ -37,7 +37,6 @@ async function uploadToB2(file, prefix = "") {
   return `https://${process.env.B2_BUCKET_NAME}.${process.env.B2_ENDPOINT}/${fileKey}`;
 }
 
-// AJOUT DE SHADOWBANS
 let db = { clips: [], votes: [], reports: [], bans: [], shadowbans: [], comments: [], bugs: [] };
 async function loadDb() {
   try {
@@ -46,7 +45,7 @@ async function loadDb() {
     db = JSON.parse(str);
     if (!db.reports) db.reports = [];
     if (!db.bans) db.bans = [];
-    if (!db.shadowbans) db.shadowbans = []; // Ajout
+    if (!db.shadowbans) db.shadowbans = [];
     if (!db.comments) db.comments = [];
     if (!db.bugs) db.bugs = [];
   } catch (err) { console.log("Nouvelle DB initialisée"); }
@@ -55,6 +54,9 @@ async function loadDb() {
 const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff4d8d", bg: "#0b060b", bgImage: "", blur: 18, dim: 0.6, favicon: "", violetFilter: false,
   submitBlocks: ["clip","rank","identity","platform","send"].map(id => ({ id, w: id === "send" ? "full" : "half" })),
   playBlocks: ["filters","info","video","ranks"],
+  patchnotes: [
+    { version: "v1.1", date: new Date().toISOString().split('T')[0], title: "Mise à jour : Système de Patch Notes", changes: ["Ajout de la page Patch Notes.", "Ajout dans l'administration."] }
+  ],
   links: [
     { id: "discord", label: "REJOINDRE LE DISCORD", sub: "La commu, les customs et les annonces", url: "https://discord.gg/onlymy", color: "#ff4d8d", icon: "💬", iconImg: "/logos/discord.png", pos: "bottom", big: true },
     { id: "paypal", label: "Me soutenir", sub: "Un petit don via PayPal", url: "https://www.paypal.com/paypalme/slashair", color: "#4f8cff", icon: "💙", iconImg: "/logos/paypal.png", pos: "bottom", big: false },
@@ -138,8 +140,6 @@ app.post("/api/clips/:id/vote", async (req, res) => {
   await save();
   
   const tally = Object.fromEntries(RANKS.map(r => [r, 0]));
-  
-  // SHADOWBAN : On ignore les votes des joueurs shadowbannis pour l'affichage
   const validVotes = db.votes.filter(x => x.clip === c.id && !db.shadowbans.some(sb => sb.uid === x.uid));
   validVotes.forEach(x => tally[x.rank]++);
   
@@ -192,6 +192,12 @@ function sanitize(b = {}) {
     bgImage: img(b.bgImage), favicon: img(b.favicon), blur: Math.min(80, Math.max(0, +b.blur || 0)), dim: Math.min(0.95, Math.max(0, +b.dim || 0)),
     violetFilter: !!b.violetFilter,
     submitBlocks: sb, playBlocks: uniq(b.playBlocks, DEF.playBlocks, x => x),
+    patchnotes: (Array.isArray(b.patchnotes) ? b.patchnotes : DEF.patchnotes).map(p => ({
+      version: clean(p.version, 20) || "v1.0",
+      date: clean(p.date, 20) || new Date().toISOString().split('T')[0],
+      title: clean(p.title, 100),
+      changes: (Array.isArray(p.changes) ? p.changes : []).map(c => clean(c, 200)).filter(Boolean)
+    })),
     links: (Array.isArray(b.links) ? b.links : []).slice(0, 20).map(l => ({ id: clean(l.id, 20) || id(), label: clean(l.label, 60), sub: clean(l.sub, 100),
       url: lnk(l.url), color: col(l.color, "#ff4d8d"), icon: clean(l.icon, 4), iconImg: img(l.iconImg), pos: l.pos === "top" ? "top" : "bottom", big: !!l.big,
       w: Math.min(460, Math.max(0, Math.round(+l.w || 0))) >= 80 ? Math.min(460, Math.round(+l.w)) : 0, h: Math.min(200, Math.max(0, Math.round(+l.h || 0))) >= 40 ? Math.min(200, Math.round(+l.h)) : 0 })) };
@@ -257,7 +263,6 @@ app.post("/api/admin/ban", auth, async (req, res) => {
 });
 app.delete("/api/admin/bans/:id", auth, async (req, res) => { db.bans = db.bans.filter(b => b.id !== req.params.id); await save(); res.json({ ok: true }); });
 
-// ROUTE SHADOWBAN
 app.post("/api/admin/shadowban", auth, async (req, res) => {
   const { uid, pseudo } = req.body;
   if (!uid) return res.status(400).json({ error: "UID requis" });
