@@ -37,7 +37,8 @@ async function uploadToB2(file, prefix = "") {
   return `https://${process.env.B2_BUCKET_NAME}.${process.env.B2_ENDPOINT}/${fileKey}`;
 }
 
-let db = { clips: [], votes: [], reports: [], bans: [], comments: [], bugs: [] };
+// AJOUT DE SHADOWBANS
+let db = { clips: [], votes: [], reports: [], bans: [], shadowbans: [], comments: [], bugs: [] };
 async function loadDb() {
   try {
     const data = await s3.send(new GetObjectCommand({ Bucket: process.env.B2_BUCKET_NAME, Key: "db.json" }));
@@ -45,12 +46,12 @@ async function loadDb() {
     db = JSON.parse(str);
     if (!db.reports) db.reports = [];
     if (!db.bans) db.bans = [];
+    if (!db.shadowbans) db.shadowbans = []; // Ajout
     if (!db.comments) db.comments = [];
     if (!db.bugs) db.bugs = [];
   } catch (err) { console.log("Nouvelle DB initialisée"); }
 }
 
-// AJOUT DE violetFilter ICI
 const DEF = { name: "onlymy", tagline: "GUESS MY RANK · VALORANT", accent: "#ff4d8d", bg: "#0b060b", bgImage: "", blur: 18, dim: 0.6, favicon: "", violetFilter: false,
   submitBlocks: ["clip","rank","identity","platform","send"].map(id => ({ id, w: id === "send" ? "full" : "half" })),
   playBlocks: ["filters","info","video","ranks"],
@@ -85,7 +86,6 @@ const save = async () => {
 const upload = multer({ storage: multer.memoryStorage(), fileFilter: (_, file, cb) => cb(null, /^video\//.test(file.mimetype)) });
 const uploadBug = multer({ storage: multer.memoryStorage(), fileFilter: (_, file, cb) => cb(null, /^(image|video)\//.test(file.mimetype)) });
 
-// ROUTE BUG REPORT
 app.post("/api/bugs", uploadBug.single("media"), async (req, res) => {
   const { pseudo, desc } = req.body;
   if(!desc) return res.status(400).json({ error: "Description requise" });
@@ -97,12 +97,7 @@ app.post("/api/bugs", uploadBug.single("media"), async (req, res) => {
   await save(); res.json({ ok: true });
 });
 
-// UPLOAD AVATAR PUBLIC (users)
-const pubImgUp = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_, f, cb) => cb(null, /^image\/(png|jpeg|webp|gif|x-icon|vnd\.microsoft\.icon)$/.test(f.mimetype))
-});
+const pubImgUp = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: (_, f, cb) => cb(null, /^image\/(png|jpeg|webp|gif|x-icon|vnd\.microsoft\.icon)$/.test(f.mimetype)) });
 app.post("/api/upload-avatar", pubImgUp.single("img"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Image invalide" });
   try { res.json({ url: await uploadToB2(req.file, "avatars/") }); }
@@ -141,8 +136,13 @@ app.post("/api/clips/:id/vote", async (req, res) => {
   let v = db.votes.find(x => x.clip === c.id && x.uid === uid);
   if (!v) { v = { clip: c.id, uid, pseudo, avatar, rank }; db.votes.push(v); } else { v.pseudo = pseudo; v.avatar = avatar; v.rank = rank; }
   await save();
+  
   const tally = Object.fromEntries(RANKS.map(r => [r, 0]));
-  db.votes.filter(x => x.clip === c.id).forEach(x => tally[x.rank]++);
+  
+  // SHADOWBAN : On ignore les votes des joueurs shadowbannis pour l'affichage
+  const validVotes = db.votes.filter(x => x.clip === c.id && !db.shadowbans.some(sb => sb.uid === x.uid));
+  validVotes.forEach(x => tally[x.rank]++);
+  
   res.json({ mine: v.rank, rank: c.rank, div: c.div, smurf: c.smurf, tally });
 });
 
@@ -190,7 +190,7 @@ function sanitize(b = {}) {
   const sb = uniq((b.submitBlocks || []).filter(x => x && x.id), sIds, x => x.id || x).map(x => typeof x === "string" ? { id: x, w: "half" } : { id: x.id, w: x.w === "full" ? "full" : "half" });
   return { name: clean(b.name, 40) || DEF.name, tagline: clean(b.tagline, 60), accent: col(b.accent, DEF.accent), bg: col(b.bg, DEF.bg),
     bgImage: img(b.bgImage), favicon: img(b.favicon), blur: Math.min(80, Math.max(0, +b.blur || 0)), dim: Math.min(0.95, Math.max(0, +b.dim || 0)),
-    violetFilter: !!b.violetFilter, // AJOUTÉ ICI
+    violetFilter: !!b.violetFilter,
     submitBlocks: sb, playBlocks: uniq(b.playBlocks, DEF.playBlocks, x => x),
     links: (Array.isArray(b.links) ? b.links : []).slice(0, 20).map(l => ({ id: clean(l.id, 20) || id(), label: clean(l.label, 60), sub: clean(l.sub, 100),
       url: lnk(l.url), color: col(l.color, "#ff4d8d"), icon: clean(l.icon, 4), iconImg: img(l.iconImg), pos: l.pos === "top" ? "top" : "bottom", big: !!l.big,
@@ -246,7 +246,7 @@ app.post("/api/admin/upload", auth, imgUp.single("img"), async (req, res) => {
   try { res.json({ url: await uploadToB2(req.file, "images/") }); } catch(err) { res.status(500).json({ error: "Erreur d'upload" }); }
 });
 
-app.get("/api/admin/data", auth, (_, res) => res.json({ clips: db.clips, reports: db.reports, bans: db.bans, comments: db.comments, bugs: db.bugs }));
+app.get("/api/admin/data", auth, (_, res) => res.json({ clips: db.clips, reports: db.reports, bans: db.bans, shadowbans: db.shadowbans, comments: db.comments, bugs: db.bugs }));
 
 app.post("/api/admin/ban", auth, async (req, res) => {
   const { uid, ip, pseudo } = req.body;
@@ -256,6 +256,16 @@ app.post("/api/admin/ban", auth, async (req, res) => {
   res.json({ ok: true });
 });
 app.delete("/api/admin/bans/:id", auth, async (req, res) => { db.bans = db.bans.filter(b => b.id !== req.params.id); await save(); res.json({ ok: true }); });
+
+// ROUTE SHADOWBAN
+app.post("/api/admin/shadowban", auth, async (req, res) => {
+  const { uid, pseudo } = req.body;
+  if (!uid) return res.status(400).json({ error: "UID requis" });
+  if (!db.shadowbans.some(b => b.uid === uid)) { db.shadowbans.push({ uid, pseudo, date: Date.now() }); await save(); }
+  res.json({ ok: true });
+});
+app.delete("/api/admin/shadowbans/:uid", auth, async (req, res) => { db.shadowbans = db.shadowbans.filter(b => b.uid !== req.params.uid); await save(); res.json({ ok: true }); });
+
 app.delete("/api/admin/clips/:id", auth, async (req, res) => {
   const c = db.clips.find(x => x.id === req.params.id);
   if (c && c.url && c.url.includes("backblazeb2.com")) {

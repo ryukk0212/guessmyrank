@@ -4,7 +4,7 @@
 button,select,input,a{cursor:url('/cursor-pointer.png'),pointer;}
 .w{max-width:1000px;margin:auto;padding:22px 16px 90px}h1{margin:0 0 16px;color:#ff4d8d}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}button,select,input{font:inherit}
-button{background:#1c0f19;border:1px solid #2e1827;color:#fbeff5;border-radius:10px;padding:9px 14px;}button.on,button.pk{background:#ff4d8d;color:#2a0716;border:0;font-weight:700}button.del{color:#ff6b8b}button.ban{color:#ff4d4d;border-color:#5a1a1a}button.unban{color:#2fcf86;border-color:#1a5a36}
+button{background:#1c0f19;border:1px solid #2e1827;color:#fbeff5;border-radius:10px;padding:9px 14px;}button.on,button.pk{background:#ff4d8d;color:#2a0716;border:0;font-weight:700}button.del{color:#ff6b8b}button.ban{color:#ff4d4d;border-color:#5a1a1a}button.unban{color:#2fcf86;border-color:#1a5a36}button.shadow{color:#e0a800;border-color:#5a4b1a}
 .box{background:#150b13;border:1px solid #2e1827;border-radius:16px;padding:16px;margin-bottom:14px}.row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.g2{grid-template-columns:1fr}}
 label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#b99aab}label.ck{flex-direction:row;align-items:center;gap:8px}
@@ -83,11 +83,12 @@ input[type=text],input[type=password],select{background:#0e070d;border:1px solid
 .ed-actions button.ed-width{width:auto;padding:0 10px;font-size:14px;}
 .ed-zone-label{text-align:center;font-size:11px;color:#b99aab;text-transform:uppercase;letter-spacing:.15em;margin:14px 0 10px;padding:8px;background:#150b13;border-radius:8px;}
 .ed-zone-label:first-child{margin-top:0;}
+.ip-box{font-family:monospace; background:#2a1021; padding:2px 6px; border-radius:4px; font-size:11px; color:#ff6b8b;}
 </style></head><body><div class="w" id="app"></div><div id="t"></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const getMedalId = u => { const m = String(u).match(/medal\.tv\/(?:games\/[^/]+\/)?clips?\/([a-zA-Z0-9]+)/); return m?m[1]:""; };
-let ME=null,cfg=null,tab="look",clips=[],reports=[],bans=[],comments=[],bugs=[], adminSearch="";
+let ME=null,cfg=null,tab="look",clips=[],reports=[],bans=[],shadowbans=[],comments=[],bugs=[], adminSearch="";
 let pvMode = localStorage.getItem("admin_pv_mode") || "desktop";
 let pvView = localStorage.getItem("admin_pv_view") || "iframe";
 let edTab  = localStorage.getItem("admin_ed_tab") || "submit";
@@ -114,14 +115,12 @@ function getAutoLogo(l) {
   return null;
 }
 
-// ===== APERÇU : contrôles =====
 function pvDevice(m){ pvMode=m; localStorage.setItem("admin_pv_mode",m); draw(); }
 function pvViewSet(v){ pvView=v; localStorage.setItem("admin_pv_view",v); draw(); }
 function edSetTab(t){ edTab=t; localStorage.setItem("admin_ed_tab",t); draw(); }
 function refreshPreview(){ const f=document.getElementById("site-preview"); if(f) f.src="/?_="+Date.now(); else draw(); }
 function toggleBlockWidth(type,i){ if(type==="submit"){ const b=cfg.submitBlocks[i]; if(b.id==="send") return; b.w=b.w==="full"?"half":"full"; draw(); } }
 
-// ===== RENDER EDITORS =====
 function renderSubmitEditor(){
   return `<div class="ed-block-grid">${cfg.submitBlocks.map((b,i)=>`
     <div class="ed-card ${b.w==="full"?"full":""}" draggable="true" data-type="submit" data-i="${i}">
@@ -181,7 +180,7 @@ async function save(){const r=await fetch("/api/admin/settings",{method:"PUT",he
 async function loadData(){
  try {
   const r = await fetch("/api/admin/data",{headers:H()});
-  if(r.ok) { const d = await r.json(); clips=d.clips; reports=d.reports; bans=d.bans; comments=d.comments; bugs=d.bugs; draw(); }
+  if(r.ok) { const d = await r.json(); clips=d.clips; reports=d.reports; bans=d.bans; shadowbans=d.shadowbans||[]; comments=d.comments; bugs=d.bugs; draw(); }
  } catch(e) { toast("Erreur"); }
 }
 
@@ -191,6 +190,8 @@ async function delComment(id){if(confirm("Supprimer ce commentaire ?")){await fe
 async function delBug(id){if(confirm("Marquer ce bug comme résolu ?")){await fetch("/api/admin/bugs/"+id,{method:"DELETE",headers:H()});loadData()}}
 async function banUser(uid, ip, pseudo){ if(confirm(`Bannir ${pseudo} ?`)) { await fetch("/api/admin/ban", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({uid, ip, pseudo})}); toast("Banni !"); loadData(); } }
 async function unbanUser(id){ if(confirm("Réhabiliter ?")) { await fetch("/api/admin/bans/"+id, {method:"DELETE", headers:H()}); loadData(); } }
+async function shadowbanUser(uid, pseudo){ if(confirm(`Shadowban ${pseudo} ? (Ses votes seront ignorés)`)) { await fetch("/api/admin/shadowban", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({uid, pseudo})}); toast("Shadowban !"); loadData(); } }
+async function unshadowbanUser(uid){ if(confirm("Retirer le shadowban ?")) { await fetch("/api/admin/shadowbans/"+uid, {method:"DELETE", headers:H()}); loadData(); } }
 
 const T=(k,l,v,x="")=>`<label>${l}<input type="text" data-k="${k}" value="${esc(v)}" ${x}></label>`;
 
@@ -215,7 +216,7 @@ function draw(){
    ["reports","🚩 Signalements"],
    ["comments","💬 Commentaires"],
    ["bugs","🐞 Bugs"],
-   ["bans","⛔ Bannis"]
+   ["bans","⛔ Bannis & Shadowbans"]
  ];
  let b="";
  
@@ -258,7 +259,6 @@ function draw(){
  if(tab==="layout")b=`<div class="box"><b>Page d’envoi</b>`+cfg.submitBlocks.map((x,i)=>`<div class="row"><span>${SL[x.id]}</span><span><select data-k="submitBlocks.${i}.w"><option value="half" ${x.w!=="full"?"selected":""}>Demi</option><option value="full" ${x.w==="full"?"selected":""}>Pleine</option></select> <button onclick="mv('submitBlocks',${i},-1)">↑</button> <button onclick="mv('submitBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>
  <div class="box"><b>Page de jeu</b>`+cfg.playBlocks.map((x,i)=>`<div class="row"><span>${PL[x]}</span><span><button onclick="mv('playBlocks',${i},-1)">↑</button> <button onclick="mv('playBlocks',${i},1)">↓</button></span></div>`).join("")+`</div>`;
 
- // ===== APERÇU + ÉDITEUR =====
  if(tab==="preview") {
    const isIframe = pvView==="iframe";
    b = `
@@ -302,10 +302,10 @@ function draw(){
      <div class="stat-card"><b>${bugs.length}</b> Bugs</div>
    </div>
    <input type="text" class="search-bar" placeholder="🔍 Rechercher un pseudo..." oninput="adminSearch=this.value; draw()" value="${esc(adminSearch)}">
-   <div class="box">${filteredClips.length?filteredClips.map(c=>`<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;"><div><b>${esc(c.pseudo)}</b> · <b style="color:var(--p)">${esc(c.rank)}${c.div?" "+c.div:""}</b> ${c.smurf?'<span style="color:#ff4d8d;font-weight:800;font-size:11px;border:1px solid #ff4d8d;padding:2px 6px;border-radius:8px;">SMURF</span>':''} · Discord : <b style="color:#5865f2">${esc(c.discord||"—")}</b></div><div style="display:flex;gap:8px;"><button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}')">Supprimer</button></div></div><div class="vid-box">${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}</div></div>`).join(""):"<small>Aucun clip trouvé.</small>"}</div>`;
+   <div class="box">${filteredClips.length?filteredClips.map(c=>`<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;"><div><b>${esc(c.pseudo)}</b> · <b style="color:var(--p)">${esc(c.rank)}${c.div?" "+c.div:""}</b> ${c.smurf?'<span style="color:#ff4d8d;font-weight:800;font-size:11px;border:1px solid #ff4d8d;padding:2px 6px;border-radius:8px;">SMURF</span>':''} · Discord : <b style="color:#5865f2">${esc(c.discord||"—")}</b><br><small style="color:#b99aab">IP: <span class="ip-box">${esc(c.ip||"Inconnue")}</span></small></div><div style="display:flex;gap:8px;"><button class="shadow" onclick="shadowbanUser('${esc(c.uid)}','${esc(c.pseudo)}')">Shadowban</button><button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}')">Supprimer</button></div></div><div class="vid-box">${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}</div></div>`).join(""):"<small>Aucun clip trouvé.</small>"}</div>`;
  }
 
- if(tab==="reports")b=`<div class="box">${reports.length?reports.map(r=>{const c=clips.find(x=>x.id===r.clip);return `<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;"><div>🚩 Signalement : <b>${c?esc(c.pseudo):"Supprimé"}</b></div><div style="display:flex;gap:8px;">${c?`<button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}');delReport('${esc(r.id)}')">Supprimer clip</button>`:""}<button class="pk" onclick="delReport('${esc(r.id)}')">Traité</button></div></div>${c ? `<div class="vid-box">${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}</div>` : ""}</div>`}).join(""):"<small>Aucun signalement.</small>"}</div>`;
+ if(tab==="reports")b=`<div class="box">${reports.length?reports.map(r=>{const c=clips.find(x=>x.id===r.clip);return `<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:15px;margin-bottom:15px; flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;"><div>🚩 Signalement : <b>${c?esc(c.pseudo):"Supprimé"}</b></div><div style="display:flex;gap:8px;">${c?`<button class="shadow" onclick="shadowbanUser('${esc(c.uid)}','${esc(c.pseudo)}')">Shadowban</button><button class="ban" onclick="banUser('${esc(c.uid)}','${esc(c.ip)}','${esc(c.pseudo)}')">Bannir</button><button class="del" onclick="delClip('${esc(c.id)}');delReport('${esc(r.id)}')">Supprimer clip</button>`:""}<button class="pk" onclick="delReport('${esc(r.id)}')">Traité</button></div></div>${c ? `<div class="vid-box">${c.yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen></iframe>` : c.medal ? `<iframe src="https://medal.tv/clip/${getMedalId(c.medal)}/embed" allowfullscreen></iframe>` : `<video src="${esc(c.url)}" controls></video>`}</div>` : ""}</div>`}).join(""):"<small>Aucun signalement.</small>"}</div>`;
 
  if(tab==="comments")b=`<div class="box"><b>Commentaires récents</b>${comments.length?comments.sort((a,b)=>b.date-a.date).map(c=>{const cl=clips.find(x=>x.id===c.clip);return `<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:10px;"><div><b>${esc(c.pseudo)}</b> sur <i>${cl?esc(cl.pseudo):"Clip supprimé"}</i> : "${esc(c.text)}"</div><button class="del" onclick="delComment('${esc(c.id)}')">Supprimer</button></div>`}).join(""):"<small>Aucun commentaire.</small>"}</div>`;
 
@@ -319,7 +319,8 @@ function draw(){
       ${x.media ? `<div class="vid-box">${x.media.includes('.mp4') ? `<video src="${esc(x.media)}" controls></video>` : `<img src="${esc(x.media)}">`}</div>` : ""}
     </div>`).join(""):"<small>Aucun bug signalé.</small>"}</div>`;
 
- if(tab==="bans")b=`<div class="box"><b>Liste des bannis</b>${bans.length?bans.map(x=>`<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:10px;"><div><b>${esc(x.pseudo||"Inconnu")}</b> · IP: ${esc(x.ip||"—")}</div><button class="unban" onclick="unbanUser('${esc(x.id)}')">Unban</button></div>`).join(""):"<small>Aucun banni.</small>"}</div>`;
+ if(tab==="bans")b=`<div class="box"><b>Liste des bannis</b>${bans.length?bans.map(x=>`<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:10px;"><div><b>${esc(x.pseudo||"Inconnu")}</b> · IP: ${esc(x.ip||"—")}</div><button class="unban" onclick="unbanUser('${esc(x.id)}')">Unban</button></div>`).join(""):"<small>Aucun banni.</small>"}</div>
+ <div class="box"><b>Liste des Shadowbans (Votes ignorés)</b>${shadowbans.length?shadowbans.map(x=>`<div class="row" style="border-bottom:1px solid #2e1827;padding-bottom:10px;"><div><b>${esc(x.pseudo||"Inconnu")}</b></div><button class="unban" onclick="unshadowbanUser('${esc(x.uid)}')">Retirer</button></div>`).join(""):"<small>Aucun shadowban.</small>"}</div>`;
  
  $("#app").innerHTML=`<div class="hd"><h1>Admin · ${esc(cfg.name)}</h1><div class="me">${ME.avatar?`<img src="${esc(ME.avatar)}" alt="">`:`<div class="av"></div>`}<span><b>${esc(ME.name)}</b><small>${ME.owner?"Owner":"Admin"}</small></span><button onclick="logout()">Déconnexion</button></div></div>
  <div class="tabs">${tabs.map(([k,l])=>`<button class="${tab===k?"on":""}" onclick="tab='${k}';${['clips','reports','comments','bugs','bans'].includes(k)?'loadData()':'draw()'}">${l}</button>`).join("")}</div>${b}
@@ -330,7 +331,6 @@ boot();
 
 let dragI=null, edDrag=null;
 
-// --- Drag & drop : LIENS (préexistant) ---
 document.addEventListener("dragstart",e=>{
   const t=e.target.closest?.(".lk-btn");
   if(t){ dragI=+t.dataset.i; t.style.opacity="0.4"; e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain","x"); return; }
@@ -352,7 +352,6 @@ document.addEventListener("dragover",e=>{
   }
 });
 document.addEventListener("drop",e=>{
-  // Drop de lien
   const z=e.target.closest?.(".preview-zone, .preview-nav");
   if(z && dragI!==null){
     e.preventDefault();
@@ -364,7 +363,6 @@ document.addEventListener("drop",e=>{
     if(bi>=0) cfg.links.splice(bi,0,it); else cfg.links.push(it);
     dragI=null; draw(); return;
   }
-  // Drop de bloc éditeur
   const eb=e.target.closest?.(".ed-card");
   if(eb && edDrag && eb.dataset.type===edDrag.type){
     e.preventDefault();
@@ -379,7 +377,6 @@ document.addEventListener("drop",e=>{
   }
 });
 
-// --- Resize handle (préexistant) ---
 document.addEventListener("pointerdown",e=>{
   const h=e.target.closest?.(".rz");
   if(!h)return;

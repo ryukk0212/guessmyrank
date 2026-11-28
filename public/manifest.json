@@ -1,0 +1,21 @@
+{
+  "name": "Guess My Rank · onlymy",
+  "short_name": "GMR",
+  "description": "Devine le rang des joueurs sur Valorant !",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b060b",
+  "theme_color": "#ff4d8d",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

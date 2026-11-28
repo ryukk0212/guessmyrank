@@ -2,7 +2,10 @@
 <html lang="fr"><head><meta charset="utf-8"><title>Guess My Rank</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" id="fav" href="data:,">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff4d8d">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@800&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
 :root{
   --bg:#0b060b;
@@ -131,9 +134,17 @@ video,iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background
 /* Bouton upload style label */
 .lbl-file{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);color:var(--tx);font-weight:700;font-size:13px;cursor:url('/cursor-pointer.png'),pointer;transition:.2s;}
 .lbl-file:hover{border-color:var(--p);background:color-mix(in srgb,var(--bg2) 80%,var(--p));}
+
+/* SHAKE ANIMATION */
+.shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
 </style></head><body><div id="bgimg"></div><div id="dim"></div>
 
-<!-- BOUTONS TOP RIGHT (Thème + Bug) -->
 <div class="top-right-actions">
   <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Changer de thème">🌙</button>
   <button class="bug-btn" onclick="openBug()">🐞 Signaler un bug</button>
@@ -153,7 +164,11 @@ let myPseudo=ls("om_pseudo","");
 let myAvatar=ls("om_avatar","");
 let tmpAvatar = "";
 
-// 1. VARIABLES GLOBALES (DOIVENT ÊTRE DÉCLARÉES AVANT LE THÈME)
+// PWA Registration
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+
 let S={name:"onlymy",tagline:"GUESS MY RANK · VALORANT",accent:"#ff4d8d",bg:"#0b060b",bgImage:"",blur:18,dim:.6,favicon:"",violetFilter:false,
  submitBlocks:[{id:"clip",w:"half"},{id:"rank",w:"half"},{id:"identity",w:"half"},{id:"platform",w:"half"},{id:"send",w:"full"}],playBlocks:["filters","info","video","ranks"],links:[]};
 let clips=[],played=ls("om_played",{}),f={tab:"up",platform:"",rank:"",div:"",file:null,err:"",smurf:false},cur=0,filter="all",pick="";
@@ -164,7 +179,6 @@ const gem=n=>`<div class="gem" style="--c:${C(n)}"><img src="ranks/${n.toLowerCa
 const view=()=>location.hash==="#play"?"play":location.hash==="#top"?"top":"submit";
 const safe=u=>/^(https?:\/\/|mailto:)/i.test(u||"")?esc(u):"#";
 
-// 2. THÈME (Maintenant S est bien déclaré au-dessus)
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme', theme);
   const btn = document.getElementById('theme-btn');
@@ -182,7 +196,6 @@ function toggleTheme(){
 }
 applyTheme(ls('om_theme', 'dark'));
 
-// --- GENERATEUR DE NEIGE ---
 const snowContainer = document.getElementById('snow-container');
 for(let i=0; i<40; i++) {
     let flake = document.createElement('div');
@@ -195,7 +208,6 @@ for(let i=0; i<40; i++) {
     snowContainer.appendChild(flake);
 }
 
-// --- GESTION DES SONS ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSound(type) {
   if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -217,7 +229,6 @@ function playSound(type) {
 }
 document.addEventListener('click', (e) => { if(e.target.closest('button') || e.target.closest('.rk') || e.target.closest('.opt')) playSound('click'); });
 
-// --- BUG REPORT MODAL ---
 function openBug(){
   const m = document.createElement("div"); m.className = "profile-modal";
   m.innerHTML = `<div class="mb">
@@ -262,7 +273,6 @@ async function sendBug(btn){
   }
 }
 
-// --- BADGE UTILISATEUR ---
 function renderUserBadge(){
   let el = document.getElementById("user-badge-el");
   if(!el){ el = document.createElement("div"); el.id="user-badge-el"; document.body.appendChild(el); }
@@ -380,19 +390,15 @@ function apply(){
  document.title=S.name+" · Guess My Rank";if(S.favicon)$("#fav").href=S.favicon;
  
  const b=$("#bgimg");
- // Si le filtre violet est activé, on met Kurumi par défaut si aucune image n'est définie
  const finalBg = S.bgImage || (S.violetFilter ? '/kurumi-bg.jpg' : '');
  
  b.style.backgroundImage = finalBg ? `url("${finalBg}")` : "none";
  b.style.backgroundSize = "cover";
  b.style.backgroundPosition = "center";
  
- // Application du filtre
  if (S.violetFilter) {
-    // Effet Violet + Flou + Assombri
     b.style.filter = `blur(${S.blur}px) sepia(1) hue-rotate(200deg) saturate(2.5) brightness(0.5)`;
  } else {
-    // Effet normal
     b.style.filter = `blur(${S.blur}px)`;
  }
  
@@ -519,7 +525,17 @@ function playView(){
      <button class="btn" onclick="cur++;pick='';render()">Suivant →</button>`:`<b>Défi : ${defiCur+1}/${defiClips.length}</b>`}
    </div></div>`:"",
    
-  video:()=>c?`<div class="card">${c.yt?`<iframe src="https://www.youtube-nocookie.com/embed/${esc(c.yt)}" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:c.medal?`<iframe src="https://medal.tv/clip/${medalId(c.medal)}/embed" allowfullscreen allow="autoplay;encrypted-media;fullscreen"></iframe>`:`<video src="${esc(c.url)}" controls playsinline></video>`}</div>`
+  // LAZY LOADING ICI
+  video:()=>c?`<div class="card" style="position:relative;">${
+      c.yt ? `<div class="lazy-video" data-type="yt" data-id="${esc(c.yt)}" style="aspect-ratio:16/9;background:#000;border-radius:16px;display:grid;place-items:center;cursor:pointer;position:relative;overflow:hidden;">
+                <img src="https://img.youtube.com/vi/${esc(c.yt)}/maxresdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:0.6;">
+                <div style="position:absolute;font-size:40px;color:white;text-shadow:0 2px 10px #000;">▶</div>
+              </div>` :
+      c.medal ? `<div class="lazy-video" data-type="medal" data-id="${medalId(c.medal)}" style="aspect-ratio:16/9;background:#000;border-radius:16px;display:grid;place-items:center;cursor:pointer;position:relative;overflow:hidden;">
+                <div style="position:absolute;font-size:40px;color:white;text-shadow:0 2px 10px #000;">▶</div>
+              </div>` :
+      `<video src="${esc(c.url)}" controls playsinline></video>`
+  }</div>`
    :`<div class="card empty"><h1 class="title-game">Tout est joué !</h1><p>Tu as deviné tous les clips. Reviens plus tard !</p><br><button class="btn pink" onclick="location.hash='submit'">Envoyer un clip</button></div>`,
    
   ranks:()=>c?`<div class="card"><div class="ranks nine" id="pr">${R.map(([r,col])=>`<div class="rk ${pick===r?"on":""}" data-r="${r}" style="--c:${col}" onclick="pickRank('${r}')">${gem(r)}${r}</div>`).join("")}</div>
@@ -528,6 +544,36 @@ function playView(){
  
  return `<div style="text-align:center;"><h1 class="title-game">À toi de trouver le vrai rank</h1><p class="lead">Un clip. Ton instinct. La révélation.</p></div><div class="stack">${S.playBlocks.map(k=>B[k]?.()||"").join("")}</div>`;
 }
+
+// GESTION DU CLIC POUR LAZY LOADING
+document.addEventListener('click', e => {
+  const lazy = e.target.closest('.lazy-video');
+  if (!lazy) return;
+  const type = lazy.dataset.type;
+  const id = lazy.dataset.id;
+  const iframe = document.createElement('iframe');
+  iframe.style = "width:100%;aspect-ratio:16/9;border:0;border-radius:16px;";
+  iframe.allow = "autoplay;encrypted-media;fullscreen";
+  iframe.allowFullscreen = true;
+  if (type === 'yt') iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`;
+  if (type === 'medal') iframe.src = `https://medal.tv/clip/${id}/embed?autoplay=1`;
+  lazy.replaceWith(iframe);
+});
+
+// KEYBOARD SHORTCUTS
+document.addEventListener('keydown', e => {
+  if (view() !== 'play' || !clips.length) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  
+  if (e.key >= '1' && e.key <= '9') {
+    const idx = parseInt(e.key) - 1;
+    if (R[idx]) pickRank(R[idx][0]);
+  }
+  if (e.key === 'Enter') {
+    const btn = document.getElementById('val');
+    if (btn && !btn.disabled) btn.click();
+  }
+});
 
 function pickRank(r){pick=r;document.querySelectorAll("#pr .rk").forEach(e=>e.classList.toggle("on",e.dataset.r===r));$("#val").disabled=false}
 
@@ -555,7 +601,19 @@ async function validate(id){
  if(!r.ok)return alert("Erreur.");
  const d=await r.json();played[id]=d.mine;sv("om_played",played);
  const ok=d.mine===d.rank;
- if(ok){ playSound('success'); streak++; defiScore++; } else { playSound('fail'); streak=0; }
+ 
+ // ANIMATIONS DE RESULTAT
+ if(ok){ 
+   playSound('success'); 
+   streak++; 
+   defiScore++; 
+   confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#ff4d8d', '#ffffff', '#8a8f98', '#2fcf86'] });
+ } else { 
+   playSound('fail'); 
+   streak=0; 
+   document.body.classList.add('shake');
+   setTimeout(() => document.body.classList.remove('shake'), 500);
+ }
  sv("om_streak",streak);
  
  if(defiMode){ modalDefi(d,ok); } 
